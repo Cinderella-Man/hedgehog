@@ -9,6 +9,13 @@
 # move said applications out of the umbrella.
 import Config
 
+config :binance,
+  api_key: "",
+  secret_key: ""
+
+config :logger,
+  level: :info
+
 # Sample configuration:
 #
 #     config :logger, :console,
