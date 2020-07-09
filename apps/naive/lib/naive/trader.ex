@@ -115,8 +115,7 @@ defmodule Naive.Trader do
       "Trade finished, trader will now exit"
     )
 
-    Process.exit(self(), :finished)
-    {:noreply, state}
+    {:stop, :trade_finished, state}
   end
 
   def handle_cast(
