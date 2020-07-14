@@ -125,20 +125,6 @@ defmodule Naive.Trader do
     {:noreply, state}
   end
 
-  defp fetch_tick_size(symbol) do
-    %{"filters" => filters} =
-      Binance.get_exchange_info()
-      |> elem(1)
-      |> Map.get(:symbols)
-      |> Enum.find(&(&1["symbol"] == String.upcase(symbol)))
-
-    %{"tickSize" => tick_size} =
-      filters
-      |> Enum.find(&(&1["filterType"] == "PRICE_FILTER"))
-
-    tick_size
-  end
-
   defp calculate_sell_price(
     buy_price,
     profit_interval,
