@@ -1,7 +1,6 @@
 defmodule Naive.Leader do
   use GenServer
   alias Naive.Trader
-  alias Decimal, as: D
 
   require Logger
 
@@ -32,6 +31,13 @@ defmodule Naive.Leader do
       }, {:continue, :start_traders}}
   end
 
+  def notify(:trader_state_updated, state) do
+    GenServer.call(
+      :"#{__MODULE__}-#{state.symbol}",
+      {:update_trader_state, state}
+    )
+  end
+
   def handle_continue(:start_traders, %{symbol: symbol} = state) do
     settings = fetch_symbol_settings(symbol)
 
@@ -47,12 +53,77 @@ defmodule Naive.Leader do
     {:noreply, %{state | settings: settings, traders: traders}}
   end
 
-  def fetch_symbol_settings(symbol) do
+  def handle_call(
+    {:update_trader_state, new_trader_state},
+    {trader_pid, _},
+    %{traders: traders} = state
+  ) do
+    case Enum.find_index(traders, &(&1.pid == trader_pid)) do
+      nil ->
+        Logger.warn(
+          "Tried to update the state of trader that leader is not aware of"
+        )
+        {:reply, :ok, state}
+      
+      index ->
+        old_trader_data = Enum.at(traders, index)
+        new_trader_data = %{old_trader_data | :state => new_trader_state}
+
+        {:reply, :ok, %{state | :traders =>
+          List.replace_at(traders, index, new_trader_data)}}
+    end
+  end
+
+  def handle_info(
+    {:DOWN, _ref, :process, trader_pid, :trade_finished},
+    %{traders: traders} = state
+  ) do
+    Logger.info("Trader finished - restarting")
+    case Enum.find_index(traders, &(&1.pid == trader_pid)) do
+      nil ->
+        Logger.warn(
+          "Tried to remove finished trader that leader is not aware of"
+        )
+        {:noreply, state}
+
+      index ->
+        trader_data = Enum.at(traders, index)
+        new_trader_data = start_new_trader(%{
+          trader_data.state | buy_order: nil, sell_order: nil
+        })
+        new_traders = List.replace_at(traders, index, new_trader_data)
+
+        {:noreply, %{state | traders: new_traders}}
+    end
+  end
+
+  def handle_info(
+    {:DOWN, _ref, :process, trader_pid, _reason},
+    %{traders: traders} = state
+  ) do
+    Logger.error("Trader died - trying to restart")
+    case Enum.find_index(traders, &(&1.pid == trader_pid)) do
+      nil ->
+        Logger.warn(
+          "Tried to restart trader but failed to find its cached state"
+        )
+        {:noreply, state}
+      
+      index ->
+        trader_data = Enum.at(traders, index)
+        new_trader_data = start_new_trader(trader_data.state)
+        new_traders = List.replace_at(traders, index, new_trader_data)
+
+        {:noreply, %{state | traders: new_traders}}
+    end
+  end
+
+  defp fetch_symbol_settings(symbol) do
     tick_size = fetch_tick_size(symbol)
 
     %{
       chunks: 1,
-      profit_interval: 0.005 # 0.5%
+      profit_interval: 0.005, # 0.5%
       tick_size: tick_size
     }
   end

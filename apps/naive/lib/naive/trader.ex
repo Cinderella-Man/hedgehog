@@ -1,5 +1,5 @@
 defmodule Naive.Trader do
-  use GenServer
+  use GenServer, restart: :temporary
 
   require Logger
   alias Decimal, as: D
@@ -15,22 +15,12 @@ defmodule Naive.Trader do
     ]
   end
 
-  def start_link(%{} = args) do
-    GenServer.start_link(__MODULE__, args, name: :trader)
+  def start_link(%State{} = state) do
+    GenServer.start_link(__MODULE__, state)
   end
 
-  def init(%{} = args) do
-    Logger.info(
-      "Initializing new trader for symbol(#{args.symbol})"
-    )
-
-    tick_size = fetch_tick_size(args.symbol)
-
-    {:ok, %State{
-      symbol: args.symbol,
-      profit_interval: args.profit_interval,
-      tick_size: tick_size
-    }}
+  def init(%State{} = state) do
+    {:ok, state}
   end
 
   def handle_cast(
@@ -57,7 +47,9 @@ defmodule Naive.Trader do
         "GTC"
       )
 
-    {:noreply, %{state | buy_order: order}}
+    new_state = %{state | buy_order: order}
+    Naive.Leader.notify(:trader_state_updated, new_state)
+    {:noreply, new_state}
   end
 
   def handle_cast(
@@ -94,8 +86,9 @@ defmodule Naive.Trader do
         sell_price,
         "GTC"
       )
-
-    {:noreply, %{state | sell_order: order}}
+    new_state = %{state | sell_order: order}
+    Naive.Leader.notify(:trader_state_updated, new_state)
+    {:noreply, new_state}
   end
 
   def handle_cast(
