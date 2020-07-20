@@ -26,9 +26,9 @@ defmodule Naive.Leader do
 
   def init(symbol) do
     {:ok,
-      %State{
-          symbol: symbol
-      }, {:continue, :start_traders}}
+     %State{
+       symbol: symbol
+     }, {:continue, :start_traders}}
   end
 
   def notify(:trader_state_updated, state) do
@@ -47,50 +47,52 @@ defmodule Naive.Leader do
       tick_size: settings.tick_size
     }
 
-    traders = for _i <- 1..settings.chunks,
-              do: start_new_trader(trader_state)
+    traders =
+      for _i <- 1..settings.chunks,
+          do: start_new_trader(trader_state)
 
     {:noreply, %{state | settings: settings, traders: traders}}
   end
 
   def handle_call(
-    {:update_trader_state, new_trader_state},
-    {trader_pid, _},
-    %{traders: traders} = state
-  ) do
+        {:update_trader_state, new_trader_state},
+        {trader_pid, _},
+        %{traders: traders} = state
+      ) do
     case Enum.find_index(traders, &(&1.pid == trader_pid)) do
       nil ->
-        Logger.warn(
-          "Tried to update the state of trader that leader is not aware of"
-        )
+        Logger.warn("Tried to update the state of trader that leader is not aware of")
         {:reply, :ok, state}
-      
+
       index ->
         old_trader_data = Enum.at(traders, index)
         new_trader_data = %{old_trader_data | :state => new_trader_state}
 
-        {:reply, :ok, %{state | :traders =>
-          List.replace_at(traders, index, new_trader_data)}}
+        {:reply, :ok, %{state | :traders => List.replace_at(traders, index, new_trader_data)}}
     end
   end
 
   def handle_info(
-    {:DOWN, _ref, :process, trader_pid, :trade_finished},
-    %{traders: traders} = state
-  ) do
+        {:DOWN, _ref, :process, trader_pid, :trade_finished},
+        %{traders: traders} = state
+      ) do
     Logger.info("Trader finished - restarting")
+
     case Enum.find_index(traders, &(&1.pid == trader_pid)) do
       nil ->
-        Logger.warn(
-          "Tried to remove finished trader that leader is not aware of"
-        )
+        Logger.warn("Tried to remove finished trader that leader is not aware of")
         {:noreply, state}
 
       index ->
         trader_data = Enum.at(traders, index)
-        new_trader_data = start_new_trader(%{
-          trader_data.state | buy_order: nil, sell_order: nil
-        })
+
+        new_trader_data =
+          start_new_trader(%{
+            trader_data.state
+            | buy_order: nil,
+              sell_order: nil
+          })
+
         new_traders = List.replace_at(traders, index, new_trader_data)
 
         {:noreply, %{state | traders: new_traders}}
@@ -98,17 +100,16 @@ defmodule Naive.Leader do
   end
 
   def handle_info(
-    {:DOWN, _ref, :process, trader_pid, _reason},
-    %{traders: traders} = state
-  ) do
+        {:DOWN, _ref, :process, trader_pid, _reason},
+        %{traders: traders} = state
+      ) do
     Logger.error("Trader died - trying to restart")
+
     case Enum.find_index(traders, &(&1.pid == trader_pid)) do
       nil ->
-        Logger.warn(
-          "Tried to restart trader but failed to find its cached state"
-        )
+        Logger.warn("Tried to restart trader but failed to find its cached state")
         {:noreply, state}
-      
+
       index ->
         trader_data = Enum.at(traders, index)
         new_trader_data = start_new_trader(trader_data.state)
@@ -123,7 +124,8 @@ defmodule Naive.Leader do
 
     %{
       chunks: 1,
-      profit_interval: 0.005, # 0.5%
+      # 0.5%
+      profit_interval: 0.005,
       tick_size: tick_size
     }
   end
