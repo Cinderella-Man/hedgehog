@@ -20,14 +20,18 @@ defmodule Naive.Trader do
   end
 
   def init(%State{} = state) do
+    Phoenix.PubSub.subscribe(
+      Streamer.PubSub,
+      "trade:#{state.symbol}"
+    )
+
     {:ok, state}
   end
 
-  def handle_cast(
-        {:event,
-         %Streamer.Binance.TradeEvent{
+  def handle_info(
+        %Streamer.Binance.TradeEvent{
            price: price
-         }},
+        },
         %State{
           symbol: symbol,
           buy_order: nil
@@ -50,12 +54,11 @@ defmodule Naive.Trader do
     {:noreply, new_state}
   end
 
-  def handle_cast(
-        {:event,
-         %Streamer.Binance.TradeEvent{
+  def handle_info(
+        %Streamer.Binance.TradeEvent{
            buyer_order_id: order_id,
            quantity: quantity
-         }},
+        },
         %State{
           symbol: symbol,
           buy_order: %Binance.OrderResponse{
@@ -89,12 +92,11 @@ defmodule Naive.Trader do
     {:noreply, new_state}
   end
 
-  def handle_cast(
-        {:event,
-         %Streamer.Binance.TradeEvent{
+  def handle_info(
+        %Streamer.Binance.TradeEvent{
            seller_order_id: order_id,
            quantity: quantity
-         }},
+        },
         %State{
           sell_order: %Binance.OrderResponse{
             order_id: order_id,
@@ -107,8 +109,8 @@ defmodule Naive.Trader do
     {:stop, :trade_finished, state}
   end
 
-  def handle_cast(
-        {:event, _},
+  def handle_info(
+        _,
         state
       ) do
     {:noreply, state}
