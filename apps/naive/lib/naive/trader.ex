@@ -30,7 +30,7 @@ defmodule Naive.Trader do
 
   def handle_info(
         %Streamer.Binance.TradeEvent{
-           price: price
+          price: price
         },
         %State{
           symbol: symbol,
@@ -56,8 +56,8 @@ defmodule Naive.Trader do
 
   def handle_info(
         %Streamer.Binance.TradeEvent{
-           buyer_order_id: order_id,
-           quantity: quantity
+          buyer_order_id: order_id,
+          quantity: quantity
         },
         %State{
           symbol: symbol,
@@ -94,8 +94,8 @@ defmodule Naive.Trader do
 
   def handle_info(
         %Streamer.Binance.TradeEvent{
-           seller_order_id: order_id,
-           quantity: quantity
+          seller_order_id: order_id,
+          quantity: quantity
         },
         %State{
           sell_order: %Binance.OrderResponse{

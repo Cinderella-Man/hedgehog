@@ -10,8 +10,8 @@
 import Config
 
 config :binance,
-  api_key: "",
-  secret_key: ""
+  api_key: "rrK0ZjZlmxcJANPu4qctiH224KYvHEn4ryoAYhvKurD70fmyjg7z21Fvv9bh3axW",
+  secret_key: "fAVvAOiCXou7LfyNDa8AuTlkRHaSyPUzfwn6ZMn7ZknYFwlNqMQYJEYbOhsFpDVi"
 
 config :logger,
   level: :info
