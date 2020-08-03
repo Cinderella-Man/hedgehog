@@ -43,6 +43,7 @@ defmodule Naive.Leader do
 
     trader_state = %Trader.State{
       symbol: symbol,
+      buy_down_interval: settings.buy_down_interval,
       profit_interval: settings.profit_interval,
       tick_size: settings.tick_size
     }
@@ -124,6 +125,8 @@ defmodule Naive.Leader do
 
     %{
       chunks: 1,
+      # 0.5%
+      buy_down_interval: 0.005,
       # 0.5%
       profit_interval: 0.005,
       tick_size: tick_size
