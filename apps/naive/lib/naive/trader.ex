@@ -7,17 +7,21 @@ defmodule Naive.Trader do
   defmodule State do
     @enforce_keys [
       :symbol,
+      :budget,
       :buy_down_interval,
       :profit_interval,
-      :tick_size
+      :tick_size,
+      :step_size
     ]
     defstruct [
       :symbol,
+      :budget,
       :buy_order,
       :sell_order,
       :buy_down_interval,
       :profit_interval,
-      :tick_size
+      :tick_size,
+      :step_size
     ]
   end
 
@@ -40,9 +44,11 @@ defmodule Naive.Trader do
         },
         %State{
           symbol: symbol,
+          budget: budget,
           buy_order: nil,
           buy_down_interval: buy_down_interval,
-          tick_size: tick_size
+          tick_size: tick_size,
+          step_size: step_size
         } = state
       ) do
     buy_price = calculate_buy_price(
@@ -53,7 +59,11 @@ defmodule Naive.Trader do
 
     Logger.info("Placing buy order (#{symbol}@#{buy_price})")
 
-    quantity = 100
+    quantity = calculate_quantity(
+      budget,
+      buy_price,
+      step_size
+    )
 
     {:ok, %Binance.OrderResponse{} = order} =
       Binance.order_limit_buy(
@@ -178,6 +188,25 @@ defmodule Naive.Trader do
       D.mult(
         D.div_int(exact_buy_price, tick),
         tick
+      )
+    )
+  end
+
+  defp calculate_quantity(
+    budget,
+    price,
+    step_size
+  ) do
+    step = D.cast(step_size)
+    price = D.cast(price)
+
+    # not necessarily legal quantity
+    exact_target_quantity = D.div(budget, price)
+
+    D.to_float(
+      D.mult(
+        D.div_int(exact_target_quantity, step),
+        step
       )
     )
   end
