@@ -32,33 +32,51 @@ defmodule Naive.Leader do
      }, {:continue, :start_traders}}
   end
 
-  def notify(:trader_state_updated, state) do
+  def notify(:trader_state_updated, trader_state) do
     GenServer.call(
-      :"#{__MODULE__}-#{state.symbol}",
-      {:update_trader_state, state}
+      :"#{__MODULE__}-#{trader_state.symbol}",
+      {:update_trader_state, trader_state}
+    )
+  end
+
+  def notify(:rebuy_triggered, trader_state) do
+    GenServer.call(
+      :"#{__MODULE__}-#{trader_state.symbol}",
+      {:rebuy_triggered, trader_state}
     )
   end
 
   def handle_continue(:start_traders, %{symbol: symbol} = state) do
     settings = fetch_symbol_settings(symbol)
-
-    trader_state = %Trader.State{
-      symbol: symbol,
-      budget: D.div(
-        D.cast(settings.budget),
-        D.cast(settings.chunks)
-      ),
-      buy_down_interval: settings.buy_down_interval,
-      profit_interval: settings.profit_interval,
-      tick_size: settings.tick_size,
-      step_size: settings.step_size
-    }
-
-    traders =
-      for _i <- 1..settings.chunks,
-          do: start_new_trader(trader_state)
-
+    trader_state = fresh_trader_state(symbol, settings)
+    traders = [start_new_trader(trader_state)]
     {:noreply, %{state | settings: settings, traders: traders}}
+  end
+
+  def handle_call(
+        {:rebuy_triggered, new_trader_state},
+        {trader_pid, _},
+        %{traders: traders, symbol: symbol, settings: settings} = state
+      ) do
+    case Enum.find_index(traders, &(&1.pid == trader_pid)) do
+      nil ->
+        Logger.warn("Rebuy triggered by trader that leader is not aware of")
+        {:reply, :ok, state}
+
+      index ->
+        traders = if settings.chunks == length traders do
+          Logger.info("All traders already started for #{symbol}")
+          traders
+        else
+          Logger.info("Starting new trader for #{symbol}")
+          [start_new_trader(fresh_trader_state(symbol, settings)) | traders]
+        end
+
+        old_trader_data = Enum.at(traders, index)
+        new_trader_data = %{old_trader_data | :state => new_trader_state}
+
+        {:reply, :ok, %{state | :traders => List.replace_at(traders, index, new_trader_data)}}
+    end
   end
 
   def handle_call(
@@ -126,6 +144,22 @@ defmodule Naive.Leader do
     end
   end
 
+  defp fresh_trader_state(symbol, settings) do
+    %Trader.State{
+      symbol: symbol,
+      budget: D.div(
+        D.cast(settings.budget),
+        D.cast(settings.chunks)
+      ),
+      buy_down_interval: settings.buy_down_interval,
+      profit_interval: settings.profit_interval,
+      rebuy_interval: settings.rebuy_interval,
+      rebuy_notified: settings.rebuy_notified,
+      tick_size: settings.tick_size,
+      step_size: settings.step_size
+    }
+  end
+
   defp fetch_symbol_settings(symbol) do
     symbol_filters = fetch_symbol_filters(symbol)
 
@@ -135,7 +169,10 @@ defmodule Naive.Leader do
       # 0.5%
       buy_down_interval: 0.005,
       # 0.5%
-      profit_interval: 0.005
+      profit_interval: 0.005,
+      # 0.5%
+      rebuy_interval: 0.005,
+      rebuy_notified: false
     }, symbol_filters)
   end
 

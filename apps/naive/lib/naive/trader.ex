@@ -10,6 +10,8 @@ defmodule Naive.Trader do
       :budget,
       :buy_down_interval,
       :profit_interval,
+      :rebuy_interval,
+      :rebuy_notified,
       :tick_size,
       :step_size
     ]
@@ -20,6 +22,8 @@ defmodule Naive.Trader do
       :sell_order,
       :buy_down_interval,
       :profit_interval,
+      :rebuy_interval,
+      :rebuy_notified,
       :tick_size,
       :step_size
     ]
@@ -178,10 +182,47 @@ defmodule Naive.Trader do
   end
 
   def handle_info(
+    %Streamer.Binance.TradeEvent{
+      price: current_price
+    },
+    %State{
+      symbol: symbol,
+      buy_order: %Binance.OrderResponse{
+        price: buy_price
+      },
+      rebuy_interval: rebuy_interval,
+      rebuy_notified: rebuy_notified
+    } = state
+  ) do
+    with false <- rebuy_notified,
+         true  <- trigger_rebuy?(buy_price, current_price, rebuy_interval)
+    do
+      Logger.info("Rebuy triggered by trader(#{symbol})")
+      new_state = %{state | rebuy_notified: true}
+      Naive.Leader.notify(:rebuy_triggered, new_state)
+      {:noreply, new_state}
+    else
+      _ -> {:noreply, state}
+    end
+  end
+
+  def handle_info(
         _,
         state
       ) do
     {:noreply, state}
+  end
+
+  defp trigger_rebuy?(buy_price, current_price, rebuy_interval) do
+    current_price = D.cast(current_price)
+    buy_price = D.cast(buy_price)
+
+    rebuy_price = D.sub(
+      buy_price,
+      D.mult(buy_price, D.cast(rebuy_interval))
+    )
+
+    D.cmp(current_price, rebuy_price) == :lt
   end
 
   defp calculate_sell_price(
