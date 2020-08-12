@@ -6,6 +6,7 @@ defmodule Naive.Trader do
 
   defmodule State do
     @enforce_keys [
+      :id,
       :symbol,
       :budget,
       :buy_down_interval,
@@ -16,6 +17,7 @@ defmodule Naive.Trader do
       :step_size
     ]
     defstruct [
+      :id,
       :symbol,
       :budget,
       :buy_order,
@@ -47,6 +49,7 @@ defmodule Naive.Trader do
           price: price
         },
         %State{
+          id: id,
           symbol: symbol,
           budget: budget,
           buy_order: nil,
@@ -61,7 +64,7 @@ defmodule Naive.Trader do
       tick_size
     )
 
-    Logger.info("Placing buy order (#{symbol}@#{buy_price})")
+    Logger.info("Trader(#{id}) placing buy order (#{symbol}@#{buy_price})")
 
     quantity = calculate_quantity(
       budget,
@@ -101,6 +104,7 @@ defmodule Naive.Trader do
           buyer_order_id: order_id
         },
         %State{
+          id: id,
           symbol: symbol,
           buy_order: %Binance.OrderResponse{
             price: buy_price,
@@ -131,7 +135,7 @@ defmodule Naive.Trader do
         tick_size
       )
 
-      Logger.info("Buy order filled, placing sell order (#{symbol}@#{sell_price})")
+      Logger.info("Trader(#{id}) buy order filled, placing sell order (#{symbol}@#{sell_price})")
 
       {:ok, %Binance.OrderResponse{} = new_sell_order} =
         Binance.order_limit_sell(
@@ -155,6 +159,7 @@ defmodule Naive.Trader do
           seller_order_id: order_id
         },
         %State{
+          id: id,
           symbol: symbol,
           sell_order: %Binance.OrderResponse{
             order_id: order_id,
@@ -162,7 +167,7 @@ defmodule Naive.Trader do
           } = sell_order
         } = state
       ) do
-    {:ok, current_sell_order} = Binance.get_order(
+    {:ok, %Binance.Order{} = current_sell_order} = Binance.get_order(
       symbol,
       timestamp,
       order_id
@@ -173,7 +178,7 @@ defmodule Naive.Trader do
     }
 
     if sell_order.status == "FILLED" do
-      Logger.info("Trade finished, trader will now exit")
+      Logger.info("Trader(#{id}) - Trade finished, trader will now exit")
       {:stop, :trade_finished, state}
     else
       new_state = %{state | sell_order: sell_order}
@@ -186,23 +191,22 @@ defmodule Naive.Trader do
       price: current_price
     },
     %State{
+      id: id,
       symbol: symbol,
       buy_order: %Binance.OrderResponse{
         price: buy_price
       },
       rebuy_interval: rebuy_interval,
-      rebuy_notified: rebuy_notified
+      rebuy_notified: false
     } = state
   ) do
-    with false <- rebuy_notified,
-         true  <- trigger_rebuy?(buy_price, current_price, rebuy_interval)
-    do
-      Logger.info("Rebuy triggered by trader(#{symbol})")
+    if trigger_rebuy?(buy_price, current_price, rebuy_interval) do
+      Logger.info("Rebuy triggered by trader(#{id}@#{symbol})")
       new_state = %{state | rebuy_notified: true}
       Naive.Leader.notify(:rebuy_triggered, new_state)
       {:noreply, new_state}
     else
-      _ -> {:noreply, state}
+      {:noreply, state}
     end
   end
 

@@ -146,6 +146,7 @@ defmodule Naive.Leader do
 
   defp fresh_trader_state(symbol, settings) do
     %Trader.State{
+      id: :os.system_time(:millisecond),
       symbol: symbol,
       budget: D.div(
         D.cast(settings.budget),
