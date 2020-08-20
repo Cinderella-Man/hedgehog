@@ -9,6 +9,15 @@
 # move said applications out of the umbrella.
 import Config
 
+config :data_warehouse,
+  ecto_repos: [DataWarehouse.Repo]
+
+config :data_warehouse, DataWarehouse.Repo,
+  database: "data_warehouse",
+  username: "postgres",
+  password: "postgres",
+  hostname: "127.0.0.1"
+
 config :binance,
   api_key: "",
   secret_key: ""
