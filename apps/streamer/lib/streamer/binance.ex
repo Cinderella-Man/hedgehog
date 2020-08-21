@@ -3,13 +3,26 @@ defmodule Streamer.Binance do
 
   require Logger
 
+  defmodule State do
+    @enforce_keys [:symbol]
+    defstruct [:symbol]
+  end
+
   @stream_endpoint "wss://stream.binance.com:9443/ws/"
 
-  def start_link(symbol, state) do
+  def start_link(symbol) do
+    symbol = String.downcase(symbol)
+    url = "#{@stream_endpoint}#{symbol}@trade"
+    Logger.info("Starting streaming on #{symbol}")
+    Logger.debug("#{url}")
+
     WebSockex.start_link(
-      "#{@stream_endpoint}#{symbol}@trade",
+      url,
       __MODULE__,
-      state
+      %State{
+        :symbol => symbol
+      },
+      name: :"#{__MODULE__}-#{symbol}"
     )
   end
 
@@ -22,7 +35,7 @@ defmodule Streamer.Binance do
     {:ok, state}
   end
 
-  def handle_event(%{"e" => "trade"} = event, _state) do
+  def handle_event(%{"e" => "trade"} = event, state) do
     trade_event = %Streamer.Binance.TradeEvent{
       :event_type => event["e"],
       :event_time => event["E"],
@@ -43,7 +56,7 @@ defmodule Streamer.Binance do
 
     Phoenix.PubSub.broadcast(
       Streamer.PubSub,
-      "trade:#{trade_event.symbol}",
+      "trade_events:#{state.symbol}",
       trade_event
     )
   end

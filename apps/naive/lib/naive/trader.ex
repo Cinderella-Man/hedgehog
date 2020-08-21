@@ -36,9 +36,10 @@ defmodule Naive.Trader do
   end
 
   def init(%State{} = state) do
+    symbol = String.downcase(state.symbol)
     Phoenix.PubSub.subscribe(
       Streamer.PubSub,
-      "trade:#{state.symbol}"
+      "trade_events:#{symbol}"
     )
 
     {:ok, state}
