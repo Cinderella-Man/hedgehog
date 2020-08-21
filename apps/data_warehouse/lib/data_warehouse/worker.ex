@@ -8,8 +8,12 @@ defmodule DataWarehouse.Worker do
     defstruct [:stream, :symbol]
   end
 
-  def start_link(args) do
-    GenServer.start_link(__MODULE__, args, name: __MODULE__)
+  def start_link(%{stream: stream, symbol: symbol} = args) do
+    GenServer.start_link(
+      __MODULE__,
+      args,
+      name: :"#{__MODULE__}-#{stream}-#{symbol}"
+    )
   end
 
   def init(%{stream: stream, symbol: symbol}) do
