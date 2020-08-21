@@ -17,12 +17,12 @@ defmodule DataWarehouse.Worker do
   end
 
   def init(%{stream: stream, symbol: symbol}) do
-    symbol = String.downcase(symbol)
-    Logger.info("DataWarehouse worker subscribing on #{symbol}")
+    topic = "#{stream}:#{symbol}"
+    Logger.info("DataWarehouse worker is subscribing to #{topic}")
 
     Phoenix.PubSub.subscribe(
       Streamer.PubSub,
-      "#{stream}:#{symbol}"
+      topic
     )
 
     {:ok, %State{
