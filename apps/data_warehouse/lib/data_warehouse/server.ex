@@ -20,9 +20,18 @@ defmodule DataWarehouse.Server do
   end
 
   def handle_cast({:start_storing, stream, symbol}, state) do
-    Logger.info("Starting new worker to store #{stream}@#{symbol}")
-    result = start_worker(stream, symbol)
-    workers = Map.put(state.workers, "#{stream}-#{symbol}", result)
+    stream = String.downcase(stream)
+    symbol = String.downcase(symbol)
+    key = "#{stream}:#{symbol}"
+    workers = if !Map.has_key?(state.workers, key) do
+      Logger.info("Starting new worker to store #{key} data")
+      result = start_worker(stream, symbol)
+      Map.put(state.workers, key, result)
+    else
+      Logger.info("Worker already started for #{key} data")
+      state.workers
+    end
+
     {:noreply, %{state | workers: workers}}
   end
 
