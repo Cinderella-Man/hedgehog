@@ -7,11 +7,7 @@ defmodule DataWarehouse.Application do
 
   def start(_type, _args) do
     children = [
-      {
-        DynamicSupervisor,
-        strategy: :one_for_one, name: DataWarehouse.DynamicSupervisor
-      },
-      {DataWarehouse.Server, []},
+      {DataWarehouse.Subscribers.Supervisor, []},
       {DataWarehouse.Repo, []}
     ]
 

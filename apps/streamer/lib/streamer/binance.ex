@@ -20,7 +20,7 @@ defmodule Streamer.Binance do
       url,
       __MODULE__,
       %State{
-        :symbol => symbol
+        symbol: symbol
       },
       name: :"#{__MODULE__}-#{symbol}"
     )
