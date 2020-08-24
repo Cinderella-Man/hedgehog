@@ -1,23 +1,23 @@
 defmodule DataWarehouse.Subscribers.Worker do
-  use GenServer
+  use GenServer, restart: :temporary
 
   require Logger
 
   defmodule State do
-    @enforce_keys [:stream, :symbol]
-    defstruct [:stream, :symbol]
+    @enforce_keys [:stream_name, :symbol]
+    defstruct [:stream_name, :symbol]
   end
 
-  def start_link(%{stream: stream, symbol: symbol} = args) do
+  def start_link(%{stream_name: stream_name, symbol: symbol} = args) do
     GenServer.start_link(
       __MODULE__,
       args,
-      name: :"#{__MODULE__}-#{stream}-#{symbol}"
+      name: :"#{__MODULE__}-#{stream_name}-#{symbol}"
     )
   end
 
-  def init(%{stream: stream, symbol: symbol}) do
-    topic = "#{stream}:#{symbol}"
+  def init(%{stream_name: stream_name, symbol: symbol}) do
+    topic = "#{stream_name}:#{symbol}"
     Logger.info("DataWarehouse worker is subscribing to #{topic}")
 
     Phoenix.PubSub.subscribe(
@@ -26,7 +26,7 @@ defmodule DataWarehouse.Subscribers.Worker do
     )
 
     {:ok, %State{
-      stream: stream,
+      stream_name: stream_name,
       symbol: symbol
     }}
   end
