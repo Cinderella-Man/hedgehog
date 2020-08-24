@@ -13,7 +13,23 @@ Insert `api_key` and `secret_key` inside `config/config.exs` file and run `mix d
 ```
 iex -S mix
 
-Naive.Trader.start_link(%{symbol: "XRPUSDT", profit_interval: 0.01})
+# connect to the Binance and stream into PubSub
+Streamer.start_streaming("xrpusdt")
 
-Streamer.Binance.start_link("xrpusdt", [])
+# to store data in db
+DataWarehouse.Subscribers.Server.start_storing("trade_events", "xrpusdt")
+
+# turn on naive strategy
+Naive.Server.start_trading("XRPUSDT")
+```
+
+## Postgres cheat sheet
+
+```
+psql -U postgres -h 127.0.0.1
+Password for user postgres: postgres
+...
+postgres=# \c data_warehouse
+...
+data_warehouse=# SELECT COUNT(*) FROM trade_events;
 ```
