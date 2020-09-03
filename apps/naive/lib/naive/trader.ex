@@ -4,6 +4,8 @@ defmodule Naive.Trader do
   require Logger
   alias Decimal, as: D
 
+  @binance_client Application.get_env(:naive, :binance_client)
+
   defmodule State do
     @enforce_keys [
       :id,
@@ -74,7 +76,7 @@ defmodule Naive.Trader do
     )
 
     {:ok, %Binance.OrderResponse{} = order} =
-      Binance.order_limit_buy(
+      @binance_client.order_limit_buy(
         symbol,
         quantity,
         buy_price,
@@ -117,7 +119,7 @@ defmodule Naive.Trader do
           tick_size: tick_size
         } = state
       ) do
-    {:ok, %Binance.Order{} = current_buy_order} = Binance.get_order(
+    {:ok, %Binance.Order{} = current_buy_order} = @binance_client.get_order(
       symbol,
       timestamp,
       order_id
@@ -139,7 +141,7 @@ defmodule Naive.Trader do
       Logger.info("Trader(#{id}) buy order filled, placing sell order (#{symbol}@#{sell_price})")
 
       {:ok, %Binance.OrderResponse{} = new_sell_order} =
-        Binance.order_limit_sell(
+        @binance_client.order_limit_sell(
           symbol,
           quantity,
           sell_price,
@@ -168,7 +170,7 @@ defmodule Naive.Trader do
           } = sell_order
         } = state
       ) do
-    {:ok, %Binance.Order{} = current_sell_order} = Binance.get_order(
+    {:ok, %Binance.Order{} = current_sell_order} = @binance_client.get_order(
       symbol,
       timestamp,
       order_id
