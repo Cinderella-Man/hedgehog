@@ -5,6 +5,8 @@ defmodule Naive.Leader do
 
   require Logger
 
+  @binance_client Application.get_env(:naive, :binance_client)
+
   defmodule State do
     defstruct symbol: nil,
               settings: nil,
@@ -191,7 +193,7 @@ defmodule Naive.Leader do
 
   defp fetch_symbol_filters(symbol) do
     %{"filters" => filters} =
-      Binance.get_exchange_info()
+      @binance_client.get_exchange_info()
       |> elem(1)
       |> Map.get(:symbols)
       |> Enum.find(&(&1["symbol"] == String.upcase(symbol)))
