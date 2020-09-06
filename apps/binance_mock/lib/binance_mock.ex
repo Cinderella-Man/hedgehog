@@ -250,16 +250,16 @@ defmodule BinanceMock do
 
   defp convert_order_to_event(%Binance.Order{} = order, time) do
     %Streamer.Binance.TradeEvent{
-      :event_type => order.type,
-      :event_time => time - 1,
-      :symbol => order.symbol,
-      :trade_id => "fake-#{time}",
-      :price => order.price,
-      :quantity => order.orig_qty,
-      :buyer_order_id => order.order_id,
-      :seller_order_id => order.order_id,
-      :trade_time => time - 1,
-      :buyer_market_maker => false
+      event_type: order.type,
+      event_time: time - 1,
+      symbol: order.symbol,
+      trade_id: "fake-#{time}",
+      price: order.price,
+      quantity: order.orig_qty,
+      buyer_order_id: order.order_id,
+      seller_order_id: order.order_id,
+      trade_time: time - 1,
+      buyer_market_maker: false
     }
   end
 
