@@ -138,8 +138,6 @@ defmodule BinanceMock do
       }
     )
 
-    broadcast_trade_event(trade_event)
-
     {:noreply, %{state | order_books: order_books}}
   end
 
