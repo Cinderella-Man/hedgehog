@@ -44,4 +44,32 @@ defmodule DataWarehouse.Subscribers.Worker do
 
     {:noreply, state}
   end
+
+  def handle_info(
+    %Binance.Order{} = order,
+    state
+  ) do
+    %DataWarehouse.Order{
+      symbol: order.symbol,
+      order_id: order.order_id,
+      client_order_id: order.client_order_id,
+      price: order.price,
+      original_quantity: order.orig_qty,
+      executed_quantity: order.executed_qty,
+      cummulative_quote_quantity: order.cummulative_quote_qty,
+      status: order.status,
+      time_in_force: order.time_in_force,
+      type: order.type,
+      side: order.side,
+      stop_price: order.stop_price,
+      iceberg_quantity: order.iceberg_qty,
+      time: order.time,
+      update_time: order.update_time
+    } |> DataWarehouse.Repo.insert(
+      on_conflict: :replace_all,
+      conflict_target: :order_id
+    )
+
+    {:noreply, state}
+  end
 end
