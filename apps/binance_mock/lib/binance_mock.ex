@@ -251,7 +251,7 @@ defmodule BinanceMock do
       event_type: order.type,
       event_time: time - 1,
       symbol: order.symbol,
-      trade_id: "fake-#{time}",
+      trade_id: Integer.floor_div(time, 1000),
       price: order.price,
       quantity: order.orig_qty,
       buyer_order_id: order.order_id,

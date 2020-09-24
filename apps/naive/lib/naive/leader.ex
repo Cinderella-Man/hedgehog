@@ -169,12 +169,12 @@ defmodule Naive.Leader do
     Map.merge(%{
       chunks: 1,
       budget: 20,
-      # 0.5%
-      buy_down_interval: 0.005,
-      # 0.5%
-      profit_interval: 0.005,
-      # 0.5%
-      rebuy_interval: 0.005,
+      # 0.01%
+      buy_down_interval: 0.0001,
+      # -0.12%
+      profit_interval: -0.0012,
+      # 0.1%
+      rebuy_interval: 0.001,
       rebuy_notified: false
     }, symbol_filters)
   end
