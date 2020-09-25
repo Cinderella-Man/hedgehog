@@ -16,8 +16,11 @@ iex -S mix
 # connect to the Binance and stream into PubSub
 Streamer.start_streaming("xrpusdt")
 
-# to store data in db
+# to store trade_events in db
 DataWarehouse.Subscribers.Server.start_storing("trade_events", "xrpusdt")
+
+# to store orders in db
+DataWarehouse.Subscribers.Server.start_storing("orders", "xrpusdt")
 
 # turn on naive strategy
 Naive.Server.start_trading("XRPUSDT")
@@ -31,5 +34,9 @@ Password for user postgres: postgres
 ...
 postgres=# \c data_warehouse
 ...
+postgres=# \x
+...
 data_warehouse=# SELECT COUNT(*) FROM trade_events;
+...
+data_warehouse=# SELECT COUNT(*) FROM orders;
 ```
