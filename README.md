@@ -40,3 +40,32 @@ data_warehouse=# SELECT COUNT(*) FROM trade_events;
 ...
 data_warehouse=# SELECT COUNT(*) FROM orders;
 ```
+
+## Loading backtesting data
+
+```
+cd /tmp
+
+wget https://github.com/Cinderella-Man/binance-trade-events/raw/master/XRPUSDT/XRPUSDT-2019-06-03.csv.gz
+
+gunzip XRPUSDT-2019-06-03.csv.gz
+
+PGPASSWORD=postgres psql -Upostgres -h localhost -ddata_warehouse  -c "\COPY trade_events FROM '/tmp/XRPUSDT-2019-06-03.csv' WITH (FORMAT csv, delimiter ';');"
+
+```
+
+## Running backtesting
+
+```
+DataWarehouse.Subscribers.Server.start_storing("orders", "xrpusdt")
+
+Naive.Server.start_trading("XRPUSDT")
+
+DataWarehouse.Publisher.start_link(%{
+  type: :trade_events,
+  symbol: "XRPUSDT",
+  from: "2019-06-02",
+  to: "2019-06-04",
+  interval: 5
+})
+```
