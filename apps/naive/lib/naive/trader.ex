@@ -190,7 +190,7 @@ defmodule Naive.Trader do
 
     if sell_order.status == "FILLED" do
       Logger.info("Trader(#{id}) - Trade finished, trader will now exit")
-      {:stop, :trade_finished, state}
+      {:stop, :normal, state}
     else
       new_state = %{state | sell_order: sell_order}
       {:noreply, new_state}

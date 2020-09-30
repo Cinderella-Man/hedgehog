@@ -100,7 +100,7 @@ defmodule Naive.Leader do
   end
 
   def handle_info(
-        {:DOWN, _ref, :process, trader_pid, :trade_finished},
+        {:DOWN, _ref, :process, trader_pid, :normal},
         %{traders: traders} = state
       ) do
     Logger.info("Trader finished - restarting")
@@ -116,7 +116,8 @@ defmodule Naive.Leader do
         new_trader_data =
           start_new_trader(%{
             trader_data.state
-            | buy_order: nil,
+            | id: :os.system_time(:millisecond),
+              buy_order: nil,
               sell_order: nil
           })
 
