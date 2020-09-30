@@ -16,7 +16,7 @@ defmodule DataWarehouse.Subscribers.Supervisor do
           DynamicSupervisor,
           strategy: :one_for_one, name: DataWarehouse.Subscribers.DynamicSupervisor
         },
-        {DataWarehouse.Subscribers.Server, []},
+        {DataWarehouse.Subscribers.Server, []}
       ],
       strategy: :one_for_all
     )

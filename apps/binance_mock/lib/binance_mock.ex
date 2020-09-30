@@ -41,102 +41,104 @@ defmodule BinanceMock do
   end
 
   def handle_cast(
-    {:add_order, %Binance.Order{symbol: symbol} = order},
-    %State{
-      order_books: order_books,
-      subscriptions: subscriptions
-    } = state
-  ) do
+        {:add_order, %Binance.Order{symbol: symbol} = order},
+        %State{
+          order_books: order_books,
+          subscriptions: subscriptions
+        } = state
+      ) do
     new_subscriptions = subscribe_to_topic(symbol, subscriptions)
     updated_order_books = add_order(order, order_books)
+
     {
       :noreply,
       %{
-        state |
-        order_books: updated_order_books,
-        subscriptions: new_subscriptions
+        state
+        | order_books: updated_order_books,
+          subscriptions: new_subscriptions
       }
     }
   end
 
   def handle_call(
-    {:get_order, symbol, time, order_id},
-    _from,
-    %State{order_books: order_books} = state
-  ) do
-    order_book = Map.get(
-      order_books,
-      :"#{symbol}",
-      %OrderBook{}
-    )
-
-    result = (
-      order_book.buy_side ++
-      order_book.sell_side ++
-      order_book.historical
-    )
-    |> Enum.find(
-      &(
-        &1.symbol == symbol and
-        &1.time == time and
-        &1.order_id == order_id
+        {:get_order, symbol, time, order_id},
+        _from,
+        %State{order_books: order_books} = state
+      ) do
+    order_book =
+      Map.get(
+        order_books,
+        :"#{symbol}",
+        %OrderBook{}
       )
-    )
+
+    result =
+      (order_book.buy_side ++
+         order_book.sell_side ++
+         order_book.historical)
+      |> Enum.find(
+        &(&1.symbol == symbol and
+            &1.time == time and
+            &1.order_id == order_id)
+      )
 
     {:reply, {:ok, result}, state}
   end
 
   def handle_call(
-    :generate_id,
-    _from,
-    %State{fake_order_id: id} = state
-  ) do
+        :generate_id,
+        _from,
+        %State{fake_order_id: id} = state
+      ) do
     {:reply, id + 1, %{state | fake_order_id: id + 1}}
   end
 
   def handle_info(
-    %Streamer.Binance.TradeEvent{} = trade_event,
-    %{order_books: order_books} = state
-  ) do
-    order_book = Map.get(
-      order_books,
-      :"#{trade_event.symbol}",
-      %OrderBook{}
-    )
+        %Streamer.Binance.TradeEvent{} = trade_event,
+        %{order_books: order_books} = state
+      ) do
+    order_book =
+      Map.get(
+        order_books,
+        :"#{trade_event.symbol}",
+        %OrderBook{}
+      )
 
-    filled_buy_orders = order_book.buy_side
-    |> Enum.take_while(
-      &D.lt?(D.cast(trade_event.price), D.cast(&1.price))
-    )
-    |> Enum.map(&Map.replace!(&1, :status, "FILLED"))
+    filled_buy_orders =
+      order_book.buy_side
+      |> Enum.take_while(&D.lt?(D.cast(trade_event.price), D.cast(&1.price)))
+      |> Enum.map(&Map.replace!(&1, :status, "FILLED"))
 
-    filled_sell_orders = order_book.sell_side
-    |> Enum.take_while(
-      &D.gt?(D.cast(trade_event.price), D.cast(&1.price))
-    )
-    |> Enum.map(&Map.replace!(&1, :status, "FILLED"))
+    filled_sell_orders =
+      order_book.sell_side
+      |> Enum.take_while(&D.gt?(D.cast(trade_event.price), D.cast(&1.price)))
+      |> Enum.map(&Map.replace!(&1, :status, "FILLED"))
 
     (filled_buy_orders ++ filled_sell_orders)
     |> Enum.map(&convert_order_to_event(&1, trade_event.event_time))
     |> Enum.map(&broadcast_trade_event/1)
 
-    remaining_buy_orders = order_book.buy_side
-    |> Enum.drop(length(filled_buy_orders))
+    remaining_buy_orders =
+      order_book.buy_side
+      |> Enum.drop(length(filled_buy_orders))
 
-    remaining_sell_orders = order_book.sell_side
-    |> Enum.drop(length(filled_sell_orders))
+    remaining_sell_orders =
+      order_book.sell_side
+      |> Enum.drop(length(filled_sell_orders))
 
-    order_books = Map.replace!(
-      order_books,
-      :"#{trade_event.symbol}",
-      %{
-        buy_side: remaining_buy_orders,
-        sell_side: remaining_sell_orders,
-        historical: filled_buy_orders ++
-                    filled_sell_orders ++
-                    order_book.historical
-      }
-    )
+    order_books =
+      Map.replace!(
+        order_books,
+        :"#{trade_event.symbol}",
+        %{
+          buy_side: remaining_buy_orders,
+          sell_side: remaining_sell_orders,
+          historical:
+            filled_buy_orders ++
+              filled_sell_orders ++
+              order_book.historical
+        }
+      )
 
     {:noreply, %{state | order_books: order_books}}
   end
@@ -144,13 +146,16 @@ defmodule BinanceMock do
   defp subscribe_to_topic(symbol, subscriptions) do
     symbol = String.downcase(symbol)
     stream_name = "trade_events:#{symbol}"
+
     case Enum.member?(subscriptions, symbol) do
       false ->
         Logger.debug("BinanceMock subscribing to #{stream_name}")
+
         Phoenix.PubSub.subscribe(
           Streamer.PubSub,
           stream_name
         )
+
         [symbol | subscriptions]
 
       _ ->
@@ -159,42 +164,47 @@ defmodule BinanceMock do
   end
 
   defp add_order(
-    %Binance.Order{symbol: symbol} = order,
-    order_books
-  ) do
-    order_book = Map.get(
-      order_books,
-      :"#{symbol}",
-      %OrderBook{}
-    )
+         %Binance.Order{symbol: symbol} = order,
+         order_books
+       ) do
+    order_book =
+      Map.get(
+        order_books,
+        :"#{symbol}",
+        %OrderBook{}
+      )
 
-    order_book = if (order.side) == "SELL" do
-      Map.replace!(
-        order_book,
-        :sell_side,
-        ([order | order_book.sell_side])
-        |> Enum.sort(&D.lt?(D.cast(&1.price), D.cast(&2.price)))
-      )
-    else
-      Map.replace!(
-        order_book,
-        :buy_side,
-        ([order | order_book.buy_side])
-        |> Enum.sort(&D.gt?(D.cast(&1.price), D.cast(&2.price)))
-      )
-    end
+    order_book =
+      if order.side == "SELL" do
+        Map.replace!(
+          order_book,
+          :sell_side,
+          [order | order_book.sell_side]
+          |> Enum.sort(&D.lt?(D.cast(&1.price), D.cast(&2.price)))
+        )
+      else
+        Map.replace!(
+          order_book,
+          :buy_side,
+          [order | order_book.buy_side]
+          |> Enum.sort(&D.gt?(D.cast(&1.price), D.cast(&2.price)))
+        )
+      end
 
     Map.put(order_books, :"#{symbol}", order_book)
   end
 
   defp order_limit(symbol, quantity, price, side) do
     quantity = Float.parse("#{quantity}") |> elem(0)
-    %Binance.Order{} = fake_order = generate_fake_order(
-      symbol,
-      quantity,
-      price,
-      side
-    )
+
+    %Binance.Order{} =
+      fake_order =
+      generate_fake_order(
+        symbol,
+        quantity,
+        price,
+        side
+      )
 
     GenServer.cast(
       __MODULE__,
@@ -205,11 +215,10 @@ defmodule BinanceMock do
   end
 
   defp generate_fake_order(symbol, quantity, price, side)
-    when is_binary(symbol) and
-         is_float(quantity) and
-         is_float(price) and
-         (side == "BUY" or side == "SELL") do
-
+       when is_binary(symbol) and
+              is_float(quantity) and
+              is_float(price) and
+              (side == "BUY" or side == "SELL") do
     current_timestamp = :os.system_time(:millisecond)
     order_id = GenServer.call(__MODULE__, :generate_id)
     client_order_id = :crypto.hash(:md5, "#{order_id}") |> Base.encode16()
@@ -234,15 +243,13 @@ defmodule BinanceMock do
     })
   end
 
-  defp convert_order_to_order_response(
-    %Binance.Order{} = order
-  ) do
+  defp convert_order_to_order_response(%Binance.Order{} = order) do
     %{
       struct(
         Binance.OrderResponse,
         order |> Map.to_list()
-      ) |
-      transact_time: order.time
+      )
+      | transact_time: order.time
     }
   end
 
@@ -261,10 +268,9 @@ defmodule BinanceMock do
     }
   end
 
-  defp broadcast_trade_event(
-    %Streamer.Binance.TradeEvent{} = trade_event
-  ) do
+  defp broadcast_trade_event(%Streamer.Binance.TradeEvent{} = trade_event) do
     symbol = String.downcase(trade_event.symbol)
+
     Phoenix.PubSub.broadcast(
       Streamer.PubSub,
       "trade_events:#{symbol}",

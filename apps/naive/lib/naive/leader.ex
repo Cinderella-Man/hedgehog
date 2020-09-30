@@ -66,13 +66,14 @@ defmodule Naive.Leader do
         {:reply, :ok, state}
 
       index ->
-        traders = if settings.chunks == length traders do
-          Logger.info("All traders already started for #{symbol}")
-          traders
-        else
-          Logger.info("Starting new trader for #{symbol}")
-          [start_new_trader(fresh_trader_state(symbol, settings)) | traders]
-        end
+        traders =
+          if settings.chunks == length(traders) do
+            Logger.info("All traders already started for #{symbol}")
+            traders
+          else
+            Logger.info("Starting new trader for #{symbol}")
+            [start_new_trader(fresh_trader_state(symbol, settings)) | traders]
+          end
 
         old_trader_data = Enum.at(traders, index)
         new_trader_data = %{old_trader_data | :state => new_trader_state}
@@ -151,10 +152,11 @@ defmodule Naive.Leader do
     %Trader.State{
       id: :os.system_time(:millisecond),
       symbol: symbol,
-      budget: D.div(
-        D.cast(settings.budget),
-        D.cast(settings.chunks)
-      ),
+      budget:
+        D.div(
+          D.cast(settings.budget),
+          D.cast(settings.chunks)
+        ),
       buy_down_interval: settings.buy_down_interval,
       profit_interval: settings.profit_interval,
       rebuy_interval: settings.rebuy_interval,
@@ -167,17 +169,20 @@ defmodule Naive.Leader do
   defp fetch_symbol_settings(symbol) do
     symbol_filters = fetch_symbol_filters(symbol)
 
-    Map.merge(%{
-      chunks: 1,
-      budget: 20,
-      # 0.01%
-      buy_down_interval: 0.0001,
-      # -0.12%
-      profit_interval: -0.0012,
-      # 0.1%
-      rebuy_interval: 0.001,
-      rebuy_notified: false
-    }, symbol_filters)
+    Map.merge(
+      %{
+        chunks: 1,
+        budget: 20,
+        # 0.01%
+        buy_down_interval: 0.0001,
+        # -0.12%
+        profit_interval: -0.0012,
+        # 0.1%
+        rebuy_interval: 0.001,
+        rebuy_notified: false
+      },
+      symbol_filters
+    )
   end
 
   defp start_new_trader(%Trader.State{} = state) do

@@ -14,33 +14,38 @@ defmodule DataWarehouse.Publisher do
   end
 
   def run(%{
-    type: :trade_events,
-    symbol: symbol,
-    from: from,
-    to: to,
-    interval: interval
-  }) do
-    from_ts = "#{from}T00:00:00.000Z"
-    |> convert_to_ms()
+        type: :trade_events,
+        symbol: symbol,
+        from: from,
+        to: to,
+        interval: interval
+      }) do
+    from_ts =
+      "#{from}T00:00:00.000Z"
+      |> convert_to_ms()
 
-    to_ts = "#{to}T23:59:59.000Z"
-    |> convert_to_ms()
+    to_ts =
+      "#{to}T23:59:59.000Z"
+      |> convert_to_ms()
 
     DataWarehouse.Repo.transaction(
       fn ->
         from(te in DataWarehouse.TradeEvent,
-          where: te.symbol == ^symbol and
-                 te.trade_time >= ^from_ts and
-                 te.trade_time < ^to_ts,
+          where:
+            te.symbol == ^symbol and
+              te.trade_time >= ^from_ts and
+              te.trade_time < ^to_ts,
           order_by: te.trade_time
         )
         |> DataWarehouse.Repo.stream()
         |> Enum.with_index()
         |> Enum.map(fn {row, index} ->
           :timer.sleep(interval)
-          if (rem(index, 10_000) == 0) do
+
+          if rem(index, 10_000) == 0 do
             Logger.info("Publisher broadcasted #{index} events")
           end
+
           publishTradeEvent(row)
         end)
       end,
@@ -51,12 +56,14 @@ defmodule DataWarehouse.Publisher do
   end
 
   defp publishTradeEvent(%DataWarehouse.TradeEvent{} = trade_event) do
-    new_trade_event = struct(
-      Streamer.Binance.TradeEvent,
-      trade_event |> Map.to_list()
-    )
+    new_trade_event =
+      struct(
+        Streamer.Binance.TradeEvent,
+        trade_event |> Map.to_list()
+      )
 
     symbol = String.downcase(trade_event.symbol)
+
     Phoenix.PubSub.broadcast(
       Streamer.PubSub,
       "trade_events:#{symbol}",

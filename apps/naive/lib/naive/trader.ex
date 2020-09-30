@@ -39,6 +39,7 @@ defmodule Naive.Trader do
 
   def init(%State{} = state) do
     symbol = String.downcase(state.symbol)
+
     Phoenix.PubSub.subscribe(
       Streamer.PubSub,
       "trade_events:#{symbol}"
@@ -61,19 +62,21 @@ defmodule Naive.Trader do
           step_size: step_size
         } = state
       ) do
-    buy_price = calculate_buy_price(
-      price,
-      buy_down_interval,
-      tick_size
-    )
+    buy_price =
+      calculate_buy_price(
+        price,
+        buy_down_interval,
+        tick_size
+      )
 
     Logger.info("Trader(#{id}) placing buy order (#{symbol}@#{buy_price})")
 
-    quantity = calculate_quantity(
-      budget,
-      buy_price,
-      step_size
-    )
+    quantity =
+      calculate_quantity(
+        budget,
+        buy_price,
+        step_size
+      )
 
     {:ok, %Binance.OrderResponse{} = order} =
       @binance_client.order_limit_buy(
@@ -82,7 +85,7 @@ defmodule Naive.Trader do
         buy_price,
         "GTC"
       )
-    
+
     :ok = broadcast_order(order)
 
     new_state = %{state | buy_order: order}
@@ -111,54 +114,57 @@ defmodule Naive.Trader do
         %State{
           id: id,
           symbol: symbol,
-          buy_order: %Binance.OrderResponse{
-            price: buy_price,
-            order_id: order_id,
-            orig_qty: quantity,
-            transact_time: timestamp
-          } = buy_order,
+          buy_order:
+            %Binance.OrderResponse{
+              price: buy_price,
+              order_id: order_id,
+              orig_qty: quantity,
+              transact_time: timestamp
+            } = buy_order,
           profit_interval: profit_interval,
           tick_size: tick_size
         } = state
       ) do
-    {:ok, %Binance.Order{} = current_buy_order} = @binance_client.get_order(
-      symbol,
-      timestamp,
-      order_id
-    )
+    {:ok, %Binance.Order{} = current_buy_order} =
+      @binance_client.get_order(
+        symbol,
+        timestamp,
+        order_id
+      )
 
     :ok = broadcast_order(current_buy_order)
 
     # fix me
-    buy_order = %{buy_order |
-      status: current_buy_order.status
-    }
+    buy_order = %{buy_order | status: current_buy_order.status}
 
-    {:ok, new_state} = if buy_order.status == "FILLED" do
+    {:ok, new_state} =
+      if buy_order.status == "FILLED" do
+        sell_price =
+          calculate_sell_price(
+            buy_price,
+            profit_interval,
+            tick_size
+          )
 
-      sell_price = calculate_sell_price(
-        buy_price,
-        profit_interval,
-        tick_size
-      )
-
-      Logger.info("Trader(#{id}) buy order filled, placing sell order (#{symbol}@#{sell_price})")
-
-      {:ok, %Binance.OrderResponse{} = new_sell_order} =
-        @binance_client.order_limit_sell(
-          symbol,
-          quantity,
-          sell_price,
-          "GTC"
+        Logger.info(
+          "Trader(#{id}) buy order filled, placing sell order (#{symbol}@#{sell_price})"
         )
-      
-      :ok = broadcast_order(new_sell_order)
 
-      {:ok, %{state | buy_order: buy_order,
-                      sell_order: new_sell_order}}
-    else
-      {:ok, %{state | buy_order: buy_order}}
-    end
+        {:ok, %Binance.OrderResponse{} = new_sell_order} =
+          @binance_client.order_limit_sell(
+            symbol,
+            quantity,
+            sell_price,
+            "GTC"
+          )
+
+        :ok = broadcast_order(new_sell_order)
+
+        {:ok, %{state | buy_order: buy_order, sell_order: new_sell_order}}
+      else
+        {:ok, %{state | buy_order: buy_order}}
+      end
+
     Naive.Leader.notify(:trader_state_updated, new_state)
     {:noreply, new_state}
   end
@@ -170,23 +176,23 @@ defmodule Naive.Trader do
         %State{
           id: id,
           symbol: symbol,
-          sell_order: %Binance.OrderResponse{
-            order_id: order_id,
-            transact_time: timestamp
-          } = sell_order
+          sell_order:
+            %Binance.OrderResponse{
+              order_id: order_id,
+              transact_time: timestamp
+            } = sell_order
         } = state
       ) do
-    {:ok, %Binance.Order{} = current_sell_order} = @binance_client.get_order(
-      symbol,
-      timestamp,
-      order_id
-    )
+    {:ok, %Binance.Order{} = current_sell_order} =
+      @binance_client.get_order(
+        symbol,
+        timestamp,
+        order_id
+      )
 
     :ok = broadcast_order(current_sell_order)
 
-    sell_order = %{sell_order |
-      status: current_sell_order.status
-    }
+    sell_order = %{sell_order | status: current_sell_order.status}
 
     if sell_order.status == "FILLED" do
       Logger.info("Trader(#{id}) - Trade finished, trader will now exit")
@@ -198,19 +204,19 @@ defmodule Naive.Trader do
   end
 
   def handle_info(
-    %Streamer.Binance.TradeEvent{
-      price: current_price
-    },
-    %State{
-      id: id,
-      symbol: symbol,
-      buy_order: %Binance.OrderResponse{
-        price: buy_price
-      },
-      rebuy_interval: rebuy_interval,
-      rebuy_notified: false
-    } = state
-  ) do
+        %Streamer.Binance.TradeEvent{
+          price: current_price
+        },
+        %State{
+          id: id,
+          symbol: symbol,
+          buy_order: %Binance.OrderResponse{
+            price: buy_price
+          },
+          rebuy_interval: rebuy_interval,
+          rebuy_notified: false
+        } = state
+      ) do
     if trigger_rebuy?(buy_price, current_price, rebuy_interval) do
       Logger.info("Rebuy triggered by trader(#{id}@#{symbol})")
       new_state = %{state | rebuy_notified: true}
@@ -232,10 +238,11 @@ defmodule Naive.Trader do
     current_price = D.cast(current_price)
     buy_price = D.cast(buy_price)
 
-    rebuy_price = D.sub(
-      buy_price,
-      D.mult(buy_price, D.cast(rebuy_interval))
-    )
+    rebuy_price =
+      D.sub(
+        buy_price,
+        D.mult(buy_price, D.cast(rebuy_interval))
+      )
 
     D.cmp(current_price, rebuy_price) == :lt
   end
@@ -270,19 +277,20 @@ defmodule Naive.Trader do
   end
 
   defp calculate_buy_price(
-    price,
-    buy_down_interval,
-    tick_size
-  ) do
+         price,
+         buy_down_interval,
+         tick_size
+       ) do
     current_price = D.cast(price)
     interval = D.cast(buy_down_interval)
     tick = D.cast(tick_size)
 
     # not necessarily legal price
-    exact_buy_price = D.sub(
-      current_price,
-      D.mult(current_price, interval)
-    )
+    exact_buy_price =
+      D.sub(
+        current_price,
+        D.mult(current_price, interval)
+      )
 
     D.to_float(
       D.mult(
@@ -293,10 +301,10 @@ defmodule Naive.Trader do
   end
 
   defp calculate_quantity(
-    budget,
-    price,
-    step_size
-  ) do
+         budget,
+         price,
+         step_size
+       ) do
     step = D.cast(step_size)
     price = D.cast(price)
 
@@ -312,13 +320,12 @@ defmodule Naive.Trader do
   end
 
   defp broadcast_order(%Binance.OrderResponse{} = response) do
-    broadcast_order(
-      convert_to_order(response)
-    )
+    broadcast_order(convert_to_order(response))
   end
 
   defp broadcast_order(%Binance.Order{} = order) do
     symbol = String.downcase(order.symbol)
+
     Phoenix.PubSub.broadcast(
       Streamer.PubSub,
       "orders:#{symbol}",

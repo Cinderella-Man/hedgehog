@@ -25,19 +25,21 @@ defmodule DataWarehouse.Subscribers.Worker do
       topic
     )
 
-    {:ok, %State{
-      stream_name: stream_name,
-      symbol: symbol
-    }}
+    {:ok,
+     %State{
+       stream_name: stream_name,
+       symbol: symbol
+     }}
   end
 
   def handle_info(
-    %Streamer.Binance.TradeEvent{} = trade_event,
-    state
-  ) do
-    opts = trade_event
-    |> Map.to_list()
-    |> Keyword.delete(:__struct__)
+        %Streamer.Binance.TradeEvent{} = trade_event,
+        state
+      ) do
+    opts =
+      trade_event
+      |> Map.to_list()
+      |> Keyword.delete(:__struct__)
 
     struct!(DataWarehouse.TradeEvent, opts)
     |> DataWarehouse.Repo.insert()
@@ -46,9 +48,9 @@ defmodule DataWarehouse.Subscribers.Worker do
   end
 
   def handle_info(
-    %Binance.Order{} = order,
-    state
-  ) do
+        %Binance.Order{} = order,
+        state
+      ) do
     %DataWarehouse.Order{
       symbol: order.symbol,
       order_id: order.order_id,
@@ -65,7 +67,8 @@ defmodule DataWarehouse.Subscribers.Worker do
       iceberg_quantity: order.iceberg_qty,
       time: order.time,
       update_time: order.update_time
-    } |> DataWarehouse.Repo.insert(
+    }
+    |> DataWarehouse.Repo.insert(
       on_conflict: :replace_all,
       conflict_target: :order_id
     )
