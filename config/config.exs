@@ -12,6 +12,15 @@ import Config
 config :naive,
   binance_client: BinanceMock
 
+config :naive,
+  ecto_repos: [Naive.Repo]
+
+config :naive, Naive.Repo,
+  database: "naive",
+  username: "postgres",
+  password: "postgres",
+  hostname: "127.0.0.1"
+
 config :data_warehouse,
   ecto_repos: [DataWarehouse.Repo]
 

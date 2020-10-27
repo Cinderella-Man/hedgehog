@@ -11,7 +11,8 @@ defmodule Naive.Application do
         DynamicSupervisor,
         strategy: :one_for_one, name: Naive.DynamicSupervisor
       },
-      {Naive.Server, []}
+      {Naive.Server, []},
+      {Naive.Repo, []}
       # Starts a worker by calling: Naive.Worker.start_link(arg)
       # {Naive.Worker, arg}
     ]
