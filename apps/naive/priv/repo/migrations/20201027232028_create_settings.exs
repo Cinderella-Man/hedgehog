@@ -1,12 +1,10 @@
 defmodule Naive.Repo.Migrations.CreateSettings do
   use Ecto.Migration
 
-  import EctoEnum
-
-  defenum TradingStatus, :trading_status, [:on, :off]
+  alias Naive.Schema.TradingStatusEnum
 
   def change do
-    TradingStatus.create_type()
+    TradingStatusEnum.create_type()
 
     create table(:settings, primary_key: false) do
       add(:id, :uuid, primary_key: true)
@@ -16,8 +14,8 @@ defmodule Naive.Repo.Migrations.CreateSettings do
       add(:buy_down_interval, :decimal, null: false)
       add(:profit_interval, :decimal, null: false)
       add(:rebuy_interval, :decimal, null: false)
-      add(:status, TradingStatus.type(), default: "off", null: false)
-
+      add(:status, TradingStatusEnum.type(), default: "off", null: false)
+      
       timestamps()
     end
 
