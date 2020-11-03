@@ -32,6 +32,7 @@ defmodule Naive.MixProject do
       {:ecto_enum, "~> 1.4"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_pubsub, "~> 2.0"},
+      {:binance_mock, in_umbrella: true},
       {:streamer, in_umbrella: true}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
