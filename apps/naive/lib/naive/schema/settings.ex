@@ -1,5 +1,4 @@
 defmodule Naive.Schema.Settings do
-
   use Ecto.Schema
 
   alias Naive.Schema.TradingStatusEnum
@@ -14,7 +13,7 @@ defmodule Naive.Schema.Settings do
     field(:profit_interval, :decimal)
     field(:rebuy_interval, :decimal)
     field(:status, TradingStatusEnum)
-    
+
     timestamps()
   end
 end
