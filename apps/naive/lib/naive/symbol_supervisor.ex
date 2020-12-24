@@ -1,5 +1,5 @@
 defmodule Naive.SymbolSupervisor do
-  use Supervisor
+  use Supervisor, restart: :temporary
 
   def start_link(symbol) do
     Supervisor.start_link(

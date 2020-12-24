@@ -25,6 +25,11 @@ defmodule Naive.Server do
     GenServer.cast(__MODULE__, {:start_trading, symbol})
   end
 
+  def stop_trading(symbol) do
+    symbol = String.upcase(symbol)
+    GenServer.cast(__MODULE__, {:stop_trading, symbol})
+  end
+
   def handle_continue(:start_trading, _state) do
     symbol_supervisors =
       fetch_symbols_to_trade()
@@ -42,9 +47,27 @@ defmodule Naive.Server do
           result = start_symbol_supervisor(symbol)
           {:ok, _settings} = update_trading_status(symbol, "on")
           Map.put(state.symbol_supervisors, symbol, result)
-        
+
         _ ->
           Logger.warn("Trading on #{symbol} already started")
+          state.symbol_supervisors
+      end
+
+    {:noreply, %{state | symbol_supervisors: new_symbol_supervisors}}
+  end
+
+  def handle_cast({:stop_trading, symbol}, state) do
+    new_symbol_supervisors =
+      case Map.get(state.symbol_supervisors, symbol) do
+        {pid, ref} ->
+          Logger.info("Stopping trading on #{symbol}")
+          {:ok, _settings} = update_trading_status(symbol, "off")
+          Process.demonitor(ref)
+          Process.exit(pid, :kill)
+          Map.delete(state.symbol_supervisors, symbol)
+
+        _ ->
+          Logger.warn("Trading on #{symbol} already stopped")
           state.symbol_supervisors
       end
 
