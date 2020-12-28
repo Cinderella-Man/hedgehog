@@ -30,6 +30,11 @@ defmodule Naive.Server do
     GenServer.cast(__MODULE__, {:stop_trading, symbol})
   end
 
+  def shutdown_trading(symbol) do
+    symbol = String.upcase(symbol)
+    GenServer.cast(__MODULE__, {:shutdown_trading, symbol})
+  end
+
   def handle_continue(:start_trading, _state) do
     symbol_supervisors =
       fetch_symbols_to_trade()
@@ -74,6 +79,20 @@ defmodule Naive.Server do
     {:noreply, %{state | symbol_supervisors: new_symbol_supervisors}}
   end
 
+  def handle_cast({:shutdown_trading, symbol}, state) do
+    case Map.get(state.symbol_supervisors, symbol) do
+      {_pid, _ref} ->
+        Logger.info("Shutting down trading on #{symbol}")
+        {:ok, settings} = update_trading_status(symbol, "shutdown")
+        Naive.Leader.notify(:settings_updated, settings)
+
+      _ ->
+        Logger.warn("Trading on #{symbol} already stopped")
+    end
+
+    {:noreply, state}
+  end
+
   defp start_symbol_supervisor(symbol) do
     {:ok, pid} =
       DynamicSupervisor.start_child(
@@ -96,7 +115,7 @@ defmodule Naive.Server do
   end
 
   defp update_trading_status(symbol, status)
-       when status == "on" or status == "off" do
+       when is_binary(status) do
     Repo.get_by(Schema.Settings, symbol: symbol)
     |> Ecto.Changeset.change(%{status: status})
     |> Repo.update()
