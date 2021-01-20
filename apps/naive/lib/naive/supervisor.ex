@@ -12,13 +12,13 @@ defmodule Naive.Supervisor do
   def init(_) do
     Supervisor.init(
       [
-        {
-          DynamicSupervisor,
-          strategy: :one_for_one, name: Naive.DynamicSupervisor
-        },
-        {Naive.Server, []}
+        {Naive.DynamicSymbolSupervisor, []},
+        {Task,
+         fn ->
+           Naive.DynamicSymbolSupervisor.autostart_symbols()
+         end}
       ],
-      strategy: :one_for_all
+      strategy: :rest_for_one
     )
   end
 end

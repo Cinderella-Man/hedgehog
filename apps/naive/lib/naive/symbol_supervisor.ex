@@ -1,5 +1,5 @@
 defmodule Naive.SymbolSupervisor do
-  use Supervisor, restart: :temporary
+  use Supervisor
 
   def start_link(symbol) do
     Supervisor.start_link(
@@ -14,7 +14,7 @@ defmodule Naive.SymbolSupervisor do
       [
         {
           DynamicSupervisor,
-          strategy: :one_for_one, name: :"Naive.DynamicSupervisor-#{symbol}"
+          strategy: :one_for_one, name: :"Naive.DynamicTraderSupervisor-#{symbol}"
         },
         {Naive.Leader, symbol}
       ],
