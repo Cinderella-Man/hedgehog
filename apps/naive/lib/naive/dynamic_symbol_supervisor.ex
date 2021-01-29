@@ -81,7 +81,7 @@ defmodule Naive.DynamicSymbolSupervisor do
   end
 
   defp update_trading_status(symbol, status)
-       when is_binary(status) and is_binary(status) do
+       when is_binary(symbol) and is_binary(status) do
     Repo.get_by(Schema.Settings, symbol: symbol)
     |> Ecto.Changeset.change(%{status: status})
     |> Repo.update()
