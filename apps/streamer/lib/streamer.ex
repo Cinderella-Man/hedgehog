@@ -2,8 +2,8 @@ defmodule Streamer do
   @moduledoc """
   Documentation for `Streamer`.
   """
+  alias Streamer.DynamicStreamerSupervisor
 
-  def start_streaming(symbol) do
-    Streamer.Binance.start_link(symbol)
-  end
+  defdelegate start_streaming(symbol), to: DynamicStreamerSupervisor
+  defdelegate stop_streaming(symbol), to: DynamicStreamerSupervisor
 end
