@@ -27,6 +27,7 @@ defmodule Naive.DynamicSymbolSupervisor do
 
   def start_trading(symbol) when is_binary(symbol) do
     symbol = String.upcase(symbol)
+
     case get_pid(symbol) do
       nil ->
         Logger.info("Starting trading on #{symbol}")
@@ -43,6 +44,7 @@ defmodule Naive.DynamicSymbolSupervisor do
 
   def stop_trading(symbol) when is_binary(symbol) do
     symbol = String.upcase(symbol)
+
     case get_pid(symbol) do
       nil ->
         Logger.warn("Trading on #{symbol} already stopped")
@@ -63,6 +65,7 @@ defmodule Naive.DynamicSymbolSupervisor do
 
   def shutdown_trading(symbol) when is_binary(symbol) do
     symbol = String.upcase(symbol)
+
     case get_pid(symbol) do
       nil ->
         Logger.warn("Trading on #{symbol} already stopped")

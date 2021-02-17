@@ -63,7 +63,7 @@ defmodule Streamer.DynamicStreamerSupervisor do
   end
 
   defp update_streaming_status(symbol, status)
-     when is_binary(symbol) and is_binary(status) do
+       when is_binary(symbol) and is_binary(status) do
     Repo.get_by(Settings, symbol: symbol)
     |> Ecto.Changeset.change(%{status: status})
     |> Repo.update()
