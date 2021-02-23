@@ -235,13 +235,13 @@ defmodule Naive.Trader do
   end
 
   defp trigger_rebuy?(buy_price, current_price, rebuy_interval) do
-    current_price = D.cast(current_price)
-    buy_price = D.cast(buy_price)
+    current_price = D.from_float(current_price)
+    buy_price = D.from_float(buy_price)
 
     rebuy_price =
       D.sub(
         buy_price,
-        D.mult(buy_price, D.cast(rebuy_interval))
+        D.mult(buy_price, D.from_float(rebuy_interval))
       )
 
     D.cmp(current_price, rebuy_price) == :lt
@@ -252,14 +252,14 @@ defmodule Naive.Trader do
          profit_interval,
          tick_size
        ) do
-    fee = D.cast("1.001")
-    original_price = D.mult(D.cast(buy_price), fee)
-    tick = D.cast(tick_size)
+    fee = D.from_float("1.001")
+    original_price = D.mult(D.from_float(buy_price), fee)
+    tick = D.from_float(tick_size)
 
     net_target_price =
       D.mult(
         original_price,
-        D.add("1.0", D.cast(profit_interval))
+        D.add("1.0", D.from_float(profit_interval))
       )
 
     gross_target_price =
@@ -281,9 +281,9 @@ defmodule Naive.Trader do
          buy_down_interval,
          tick_size
        ) do
-    current_price = D.cast(price)
-    interval = D.cast(buy_down_interval)
-    tick = D.cast(tick_size)
+    current_price = D.from_float(price)
+    interval = D.from_float(buy_down_interval)
+    tick = D.from_float(tick_size)
 
     # not necessarily legal price
     exact_buy_price =
@@ -305,8 +305,8 @@ defmodule Naive.Trader do
          price,
          step_size
        ) do
-    step = D.cast(step_size)
-    price = D.cast(price)
+    step = D.from_float(step_size)
+    price = D.from_float(price)
 
     # not necessarily legal quantity
     exact_target_quantity = D.div(budget, price)

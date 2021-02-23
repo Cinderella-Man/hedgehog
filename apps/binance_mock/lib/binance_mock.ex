@@ -106,12 +106,12 @@ defmodule BinanceMock do
 
     filled_buy_orders =
       order_book.buy_side
-      |> Enum.take_while(&D.lt?(D.cast(trade_event.price), D.cast(&1.price)))
+      |> Enum.take_while(&D.lt?(D.from_float(trade_event.price), D.from_float(&1.price)))
       |> Enum.map(&Map.replace!(&1, :status, "FILLED"))
 
     filled_sell_orders =
       order_book.sell_side
-      |> Enum.take_while(&D.gt?(D.cast(trade_event.price), D.cast(&1.price)))
+      |> Enum.take_while(&D.gt?(D.from_float(trade_event.price), D.from_float(&1.price)))
       |> Enum.map(&Map.replace!(&1, :status, "FILLED"))
 
     (filled_buy_orders ++ filled_sell_orders)
@@ -180,14 +180,14 @@ defmodule BinanceMock do
           order_book,
           :sell_side,
           [order | order_book.sell_side]
-          |> Enum.sort(&D.lt?(D.cast(&1.price), D.cast(&2.price)))
+          |> Enum.sort(&D.lt?(D.from_float(&1.price), D.from_float(&2.price)))
         )
       else
         Map.replace!(
           order_book,
           :buy_side,
           [order | order_book.buy_side]
-          |> Enum.sort(&D.gt?(D.cast(&1.price), D.cast(&2.price)))
+          |> Enum.sort(&D.gt?(D.from_float(&1.price), D.from_float(&2.price)))
         )
       end
 

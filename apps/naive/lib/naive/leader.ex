@@ -208,8 +208,8 @@ defmodule Naive.Leader do
       symbol: symbol,
       budget:
         D.div(
-          D.cast(settings.budget),
-          D.cast(settings.chunks)
+          D.from_float(settings.budget),
+          D.from_float(settings.chunks)
         ),
       buy_down_interval: settings.buy_down_interval,
       profit_interval: settings.profit_interval,
