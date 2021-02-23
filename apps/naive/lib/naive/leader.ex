@@ -142,7 +142,7 @@ defmodule Naive.Leader do
         Logger.warn("Tried to remove finished trader that leader is not aware of")
 
         if traders == [] do
-          Naive.Server.stop_trading(state.symbol)
+          Naive.stop_trading(state.symbol)
         end
 
         {:noreply, state}
@@ -160,7 +160,7 @@ defmodule Naive.Leader do
 
         if new_traders == [] do
           Logger.info("Shutdown finished for #{state.symbol} - killing the supervision tree")
-          Naive.Server.stop_trading(state.symbol)
+          Naive.stop_trading(state.symbol)
         end
 
         {:noreply, %{state | traders: new_traders}}
@@ -233,7 +233,7 @@ defmodule Naive.Leader do
   defp start_new_trader(%Trader.State{} = state) do
     {:ok, pid} =
       DynamicSupervisor.start_child(
-        :"Naive.DynamicSupervisor-#{state.symbol}",
+        :"Naive.DynamicTraderSupervisor-#{state.symbol}",
         {Naive.Trader, state}
       )
 

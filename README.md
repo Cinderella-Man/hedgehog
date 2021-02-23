@@ -23,7 +23,7 @@ DataWarehouse.Subscribers.Server.start_storing("trade_events", "xrpusdt")
 DataWarehouse.Subscribers.Server.start_storing("orders", "xrpusdt")
 
 # turn on naive strategy
-Naive.Server.start_trading("XRPUSDT")
+Naive.start_trading("XRPUSDT")
 ```
 
 ## Postgres cheat sheet
