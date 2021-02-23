@@ -41,6 +41,12 @@ data_warehouse=# SELECT COUNT(*) FROM trade_events;
 data_warehouse=# SELECT COUNT(*) FROM orders;
 ```
 
+## Loading default symbol settings  
+
+```
+mix run apps/naive/priv/seed_settings.exs
+```
+
 ## Loading backtesting data
 
 ```
