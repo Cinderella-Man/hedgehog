@@ -1,12 +1,82 @@
 # Hedgehog
 
-Repository created to follow along the [Create a cryptocurrency trading bot in Elixir](https://www.youtube.com/playlist?list=PLxsE19GnjC5Nv1CbeKOiS5YqGqw35aZFJ) course.
+Repository created to follow along with the [Create a cryptocurrency trading bot in Elixir](https://www.youtube.com/playlist?list=PLxsE19GnjC5Nv1CbeKOiS5YqGqw35aZFJ) course.
 
-Each subsequent video has assigned git branch that stores a state of the code after it.
+Each subsequent video has an assigned git branch that stores a state of the code after it.
 
-## Setup
+For anyone interested in an ebook version of the course, I've published one at [LeanPub](https://leanpub.com/create-a-cryptocurrency-trading-bot-in-elixir).
 
-Insert `api_key` and `secret_key` inside `config/config.exs` file and run `mix deps.get` 
+## Limit of Liability/Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+## Intial setup
+
+1. Install the required dependencies:
+
+```
+$ mix deps.get
+...
+```
+
+2. Start Postgres instance inside docker:
+
+```
+$ docker-compose up -d
+Creating hedgehog_db_1 ... done
+```
+
+3. Create databases inside the Postgres instance:
+
+```
+$ mix ecto.create
+The database for DataWarehouse.Repo has been created
+The database for Naive.Repo has been created
+The database for Streamer.Repo has been created
+```
+
+4. Migrate all databases:
+
+```
+$ mix ecto.migrate
+...
+```
+
+5. Seed default settings into the `naive` database:
+
+```
+$ cd apps/naive
+$ mix run priv/seed_settings.exs
+...
+```
+
+6. Seed default settings into the `streamer` database:
+
+```
+$ cd apps/streamer
+$ mix run priv/seed_settings.exs
+...
+```
+
+## Further setup (danger zone)
+
+Inside the configuration file(`config/config.exs`) there's a setting(`config :naive, binance_client`) specifying which Binance client should be used. By default, it's the `BinanceMock` module that *won't* connect to the Binance exchange at all neither it will require any access configuration as it stores orders in memory.
+
+To connect to the Binance exchange and make real trades the configuration needs to be changed to the `Binance` client:
+
+```
+# /config/config.exs:L22
+binance_client: BinanceMock, => binance_client: Binance,
+```
+as well as `api_key` and `secret_key` need to be set:
+
+```
+# /config/config.exs:L49
+config :binance,
+  api_key: "insert value here",
+  secret_key: "insert value here"
+```
 
 ## Running
 
