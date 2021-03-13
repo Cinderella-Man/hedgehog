@@ -18,7 +18,9 @@ defmodule Naive.DynamicSymbolSupervisor do
   def autostart_symbols() do
     Core.ServiceSupervisor.autostart_workers(
       Naive.Repo,
-      Naive.Schema.Settings
+      Naive.Schema.Settings,
+      Naive.DynamicSymbolSupervisor,
+      Naive.SymbolSupervisor
     )
   end
 
@@ -26,7 +28,9 @@ defmodule Naive.DynamicSymbolSupervisor do
     Core.ServiceSupervisor.start_worker(
       symbol,
       Naive.Repo,
-      Naive.Schema.Settings
+      Naive.Schema.Settings,
+      Naive.DynamicSymbolSupervisor,
+      Naive.SymbolSupervisor
     )
   end
 
@@ -34,14 +38,16 @@ defmodule Naive.DynamicSymbolSupervisor do
     Core.ServiceSupervisor.stop_worker(
       symbol,
       Naive.Repo,
-      Naive.Schema.Settings
+      Naive.Schema.Settings,
+      Naive.DynamicSymbolSupervisor,
+      Naive.SymbolSupervisor
     )
   end
 
   def shutdown_trading(symbol) when is_binary(symbol) do
     symbol = String.upcase(symbol)
 
-    case Core.ServiceSupervisor.get_pid(symbol) do
+    case Core.ServiceSupervisor.get_pid(Naive.SymbolSupervisor, symbol) do
       nil ->
         Logger.warn("Trading on #{symbol} already stopped")
 

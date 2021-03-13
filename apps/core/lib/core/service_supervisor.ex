@@ -3,23 +3,23 @@ defmodule Core.ServiceSupervisor do
 
   import Ecto.Query, only: [from: 2]
 
-  def autostart_workers(repo, schema) do
+  def autostart_workers(repo, schema, module, worker_module) do
     fetch_symbols_to_start(repo, schema)
-    |> Enum.map(&start_worker(&1, repo, schema))
+    |> Enum.map(&start_worker(&1, repo, schema, module, worker_module))
   end
 
-  def start_worker(symbol, repo, schema) when is_binary(symbol) do
+  def start_worker(symbol, repo, schema, module, worker_module) when is_binary(symbol) do
     symbol = String.upcase(symbol)
 
-    case get_pid(symbol) do
+    case get_pid(worker_module, symbol) do
       nil ->
         Logger.info("Starting worker on #{symbol}")
         {:ok, _settings} = update_status(symbol, "on", repo, schema)
 
         {:ok, _pid} =
           DynamicSupervisor.start_child(
-            Naive.DynamicSymbolSupervisor,
-            {Naive.SymbolSupervisor, symbol}
+            module,
+            {worker_module, symbol}
           )
 
       pid ->
@@ -30,10 +30,10 @@ defmodule Core.ServiceSupervisor do
     end
   end
 
-  def stop_worker(symbol, repo, schema) when is_binary(symbol) do
+  def stop_worker(symbol, repo, schema, module, worker_module) when is_binary(symbol) do
     symbol = String.upcase(symbol)
 
-    case get_pid(symbol) do
+    case get_pid(worker_module, symbol) do
       nil ->
         Logger.warn("worker on #{symbol} already stopped")
         {:ok, _settings} = update_status(symbol, "off", repo, schema)
@@ -43,7 +43,7 @@ defmodule Core.ServiceSupervisor do
 
         :ok =
           DynamicSupervisor.terminate_child(
-            Naive.DynamicSymbolSupervisor,
+            module,
             pid
           )
 
@@ -51,8 +51,8 @@ defmodule Core.ServiceSupervisor do
     end
   end
 
-  def get_pid(symbol) do
-    Process.whereis(:"Elixir.Naive.SymbolSupervisor-#{symbol}")
+  def get_pid(worker_module, symbol) do
+    Process.whereis(:"#{worker_module}-#{symbol}")
   end
 
   def update_status(symbol, status, repo, schema)
