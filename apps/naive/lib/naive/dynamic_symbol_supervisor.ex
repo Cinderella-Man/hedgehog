@@ -1,10 +1,10 @@
 defmodule Naive.DynamicSymbolSupervisor do
-  use DynamicSupervisor
+  use Core.ServiceSupervisor
 
   require Logger
 
   def start_link(init_arg) do
-    DynamicSupervisor.start_link(
+    Core.ServiceSupervisor.start_link(
       __MODULE__,
       init_arg,
       name: __MODULE__
@@ -12,7 +12,7 @@ defmodule Naive.DynamicSymbolSupervisor do
   end
 
   def init(_init_arg) do
-    DynamicSupervisor.init(strategy: :one_for_one)
+    Core.ServiceSupervisor.init(strategy: :one_for_one)
   end
 
   def autostart_symbols() do

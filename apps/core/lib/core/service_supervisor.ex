@@ -3,6 +3,15 @@ defmodule Core.ServiceSupervisor do
 
   import Ecto.Query, only: [from: 2]
 
+  defdelegate start_link(module, args, opts), to: DynamicSupervisor
+  defdelegate init(opts), to: DynamicSupervisor
+
+  defmacro __using__(opts) do
+    quote location: :keep do
+      use DynamicSupervisor
+    end
+  end
+
   def autostart_workers(repo, schema, module, worker_module) do
     fetch_symbols_to_start(repo, schema)
     |> Enum.map(&start_worker(&1, repo, schema, module, worker_module))
