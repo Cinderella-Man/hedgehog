@@ -7,8 +7,57 @@ defmodule Core.ServiceSupervisor do
   defdelegate init(opts), to: DynamicSupervisor
 
   defmacro __using__(opts) do
+    {:ok, repo} = Keyword.fetch(opts, :repo)
+    {:ok, schema} = Keyword.fetch(opts, :schema)
+    {:ok, module} = Keyword.fetch(opts, :module)
+    {:ok, worker_module} = Keyword.fetch(opts, :worker_module)
     quote location: :keep do
       use DynamicSupervisor
+
+      def autostart_symbols() do
+        Core.ServiceSupervisor.autostart_workers(
+          unquote(repo),
+          unquote(schema),
+          unquote(module),
+          unquote(worker_module)
+        )
+      end
+
+      def start_trading(symbol) when is_binary(symbol) do
+        Core.ServiceSupervisor.start_worker(
+          symbol,
+          unquote(repo),
+          unquote(schema),
+          unquote(module),
+          unquote(worker_module)
+        )
+      end
+
+      def stop_trading(symbol) when is_binary(symbol) do
+        Core.ServiceSupervisor.stop_worker(
+          symbol,
+          unquote(repo),
+          unquote(schema),
+          unquote(module),
+          unquote(worker_module)
+        )
+      end
+
+      def get_pid(symbol) do
+        Core.ServiceSupervisor.get_pid(
+          unquote(worker_module),
+          symbol
+        )
+      end
+
+      def update_status(symbol, status) do
+        Core.ServiceSupervisor.update_status(
+          symbol,
+          status,
+          unquote(repo),
+          unquote(schema)
+        )
+      end
     end
   end
 
@@ -33,8 +82,7 @@ defmodule Core.ServiceSupervisor do
 
       pid ->
         Logger.warn("worker on #{symbol} already started")
-        {:ok, settings} = update_status(symbol, "on", repo, schema)
-        Naive.Leader.notify(:settings_updated, settings)
+        {:ok, _settings} = update_status(symbol, "on", repo, schema)
         {:ok, pid}
     end
   end
