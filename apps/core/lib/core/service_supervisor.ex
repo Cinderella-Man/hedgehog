@@ -14,7 +14,7 @@ defmodule Core.ServiceSupervisor do
     quote location: :keep do
       use DynamicSupervisor
 
-      def autostart_symbols() do
+      def autostart_workers() do
         Core.ServiceSupervisor.autostart_workers(
           unquote(repo),
           unquote(schema),
@@ -23,7 +23,7 @@ defmodule Core.ServiceSupervisor do
         )
       end
 
-      def start_trading(symbol) when is_binary(symbol) do
+      def start_worker(symbol) when is_binary(symbol) do
         Core.ServiceSupervisor.start_worker(
           symbol,
           unquote(repo),
@@ -33,7 +33,7 @@ defmodule Core.ServiceSupervisor do
         )
       end
 
-      def stop_trading(symbol) when is_binary(symbol) do
+      def stop_worker(symbol) when is_binary(symbol) do
         Core.ServiceSupervisor.stop_worker(
           symbol,
           unquote(repo),
