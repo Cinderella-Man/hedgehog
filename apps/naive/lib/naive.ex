@@ -4,7 +4,7 @@ defmodule Naive do
   """
   alias Naive.DynamicSymbolSupervisor
 
-  defdelegate start_trading(symbol), to: DynamicSymbolSupervisor
-  defdelegate stop_trading(symbol), to: DynamicSymbolSupervisor
+  defdelegate start_trading(symbol), to: DynamicSymbolSupervisor, as: :start_worker
+  defdelegate stop_trading(symbol), to: DynamicSymbolSupervisor, as: :stop_worker
   defdelegate shutdown_trading(symbol), to: DynamicSymbolSupervisor
 end

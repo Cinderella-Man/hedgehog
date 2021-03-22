@@ -15,7 +15,7 @@ defmodule Naive.Supervisor do
         {Naive.DynamicSymbolSupervisor, []},
         {Task,
          fn ->
-           Naive.DynamicSymbolSupervisor.autostart_symbols()
+           Naive.DynamicSymbolSupervisor.autostart_workers()
          end}
       ],
       strategy: :rest_for_one

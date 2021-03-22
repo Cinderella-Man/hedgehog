@@ -10,7 +10,7 @@ defmodule Streamer.Supervisor do
       {Streamer.DynamicStreamerSupervisor, []},
       {Task,
        fn ->
-         Streamer.DynamicStreamerSupervisor.autostart_streaming()
+         Streamer.DynamicStreamerSupervisor.autostart_workers()
        end}
     ]
 
