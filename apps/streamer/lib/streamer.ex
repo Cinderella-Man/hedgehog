@@ -4,6 +4,15 @@ defmodule Streamer do
   """
   alias Streamer.DynamicStreamerSupervisor
 
-  defdelegate start_streaming(symbol), to: DynamicStreamerSupervisor, as: :start_worker
-  defdelegate stop_streaming(symbol), to: DynamicStreamerSupervisor, as: :stop_worker
+  def start_streaming(symbol) do
+    symbol
+    |> String.upcase()
+    |> DynamicStreamerSupervisor.start_worker()
+  end
+
+  def stop_streaming(symbol) do
+    symbol
+    |> String.upcase()
+    |> DynamicStreamerSupervisor.stop_worker()
+  end
 end
