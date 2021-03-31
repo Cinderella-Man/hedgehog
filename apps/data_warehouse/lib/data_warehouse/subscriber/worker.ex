@@ -1,23 +1,22 @@
-defmodule DataWarehouse.Subscribers.Worker do
-  use GenServer, restart: :temporary
+defmodule DataWarehouse.Subscriber.Worker do
+  use GenServer
 
   require Logger
 
   defmodule State do
-    @enforce_keys [:stream_name, :symbol]
-    defstruct [:stream_name, :symbol]
+    @enforce_keys [:topic]
+    defstruct [:topic]
   end
 
-  def start_link(%{stream_name: stream_name, symbol: symbol} = args) do
+  def start_link(topic) do
     GenServer.start_link(
       __MODULE__,
-      args,
-      name: :"#{__MODULE__}-#{stream_name}-#{symbol}"
+      topic,
+      name: via_tuple(topic)
     )
   end
 
-  def init(%{stream_name: stream_name, symbol: symbol}) do
-    topic = "#{stream_name}:#{symbol}"
+  def init(topic) do
     Logger.info("DataWarehouse worker is subscribing to #{topic}")
 
     Phoenix.PubSub.subscribe(
@@ -27,8 +26,7 @@ defmodule DataWarehouse.Subscribers.Worker do
 
     {:ok,
      %State{
-       stream_name: stream_name,
-       symbol: symbol
+       topic: topic
      }}
   end
 
@@ -41,7 +39,7 @@ defmodule DataWarehouse.Subscribers.Worker do
       |> Map.to_list()
       |> Keyword.delete(:__struct__)
 
-    struct!(DataWarehouse.TradeEvent, opts)
+    struct!(DataWarehouse.Schema.TradeEvent, opts)
     |> DataWarehouse.Repo.insert()
 
     {:noreply, state}
@@ -51,7 +49,7 @@ defmodule DataWarehouse.Subscribers.Worker do
         %Binance.Order{} = order,
         state
       ) do
-    %DataWarehouse.Order{
+    %DataWarehouse.Schema.Order{
       symbol: order.symbol,
       order_id: order.order_id,
       client_order_id: order.client_order_id,
@@ -74,5 +72,9 @@ defmodule DataWarehouse.Subscribers.Worker do
     )
 
     {:noreply, state}
+  end
+
+  defp via_tuple(topic) do
+    {:via, Registry, {:subscriber_workers, topic}}
   end
 end

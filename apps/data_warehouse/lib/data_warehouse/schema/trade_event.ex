@@ -1,4 +1,4 @@
-defmodule DataWarehouse.TradeEvent do
+defmodule DataWarehouse.Schema.TradeEvent do
   use Ecto.Schema
 
   @primary_key {:id, :binary_id, autogenerate: true}

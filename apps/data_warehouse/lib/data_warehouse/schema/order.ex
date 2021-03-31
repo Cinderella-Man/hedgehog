@@ -1,4 +1,4 @@
-defmodule DataWarehouse.Order do
+defmodule DataWarehouse.Schema.Order do
   use Ecto.Schema
 
   @primary_key {:order_id, :integer, autogenerate: false}
