@@ -38,11 +38,9 @@ defmodule Naive.Trader do
   end
 
   def init(%State{} = state) do
-    symbol = String.downcase(state.symbol)
-
     Phoenix.PubSub.subscribe(
       Streamer.PubSub,
-      "trade_events:#{symbol}"
+      "TRADE_EVENTS:#{state.symbol}"
     )
 
     {:ok, state}
@@ -324,11 +322,9 @@ defmodule Naive.Trader do
   end
 
   defp broadcast_order(%Binance.Order{} = order) do
-    symbol = String.downcase(order.symbol)
-
     Phoenix.PubSub.broadcast(
       Streamer.PubSub,
-      "orders:#{symbol}",
+      "ORDERS:#{order.symbol}",
       order
     )
   end

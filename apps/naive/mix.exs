@@ -27,7 +27,6 @@ defmodule Naive.MixProject do
   defp deps do
     [
       {:binance, "~> 0.7.1"},
-      {:core, in_umbrella: true},
       {:decimal, "~> 1.0"},
       {:ecto_sql, "~> 3.0"},
       {:ecto_enum, "~> 1.4"},

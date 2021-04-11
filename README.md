@@ -87,10 +87,10 @@ iex -S mix
 Streamer.start_streaming("xrpusdt")
 
 # to store trade_events in db
-DataWarehouse.Subscribers.Server.start_storing("trade_events", "xrpusdt")
+DataWarehouse.start_storing("trade_events", "xrpusdt")
 
 # to store orders in db
-DataWarehouse.Subscribers.Server.start_storing("orders", "xrpusdt")
+DataWarehouse.start_storing("orders", "xrpusdt")
 
 # turn on naive strategy
 Naive.start_trading("XRPUSDT")
@@ -127,11 +127,11 @@ PGPASSWORD=postgres psql -Upostgres -h localhost -ddata_warehouse  -c "\COPY tra
 ## Running backtesting
 
 ```
-DataWarehouse.Subscribers.Server.start_storing("orders", "xrpusdt")
+DataWarehouse.start_storing("orders", "xrpusdt")
 
-Naive.Server.start_trading("XRPUSDT")
+Naive.start_trading("XRPUSDT")
 
-DataWarehouse.Publisher.start_link(%{
+DataWarehouse.publish_data(%{
   type: :trade_events,
   symbol: "XRPUSDT",
   from: "2019-06-02",

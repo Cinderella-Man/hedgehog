@@ -7,6 +7,7 @@ defmodule Streamer.Supervisor do
 
   def init(_init_arg) do
     children = [
+      {Registry, [keys: :unique, name: :binance_workers]},
       {Streamer.DynamicStreamerSupervisor, []},
       {Task,
        fn ->

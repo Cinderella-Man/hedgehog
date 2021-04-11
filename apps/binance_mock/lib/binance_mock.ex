@@ -144,8 +144,7 @@ defmodule BinanceMock do
   end
 
   defp subscribe_to_topic(symbol, subscriptions) do
-    symbol = String.downcase(symbol)
-    stream_name = "trade_events:#{symbol}"
+    stream_name = "TRADE_EVENTS:#{symbol}"
 
     case Enum.member?(subscriptions, symbol) do
       false ->
@@ -269,11 +268,9 @@ defmodule BinanceMock do
   end
 
   defp broadcast_trade_event(%Streamer.Binance.TradeEvent{} = trade_event) do
-    symbol = String.downcase(trade_event.symbol)
-
     Phoenix.PubSub.broadcast(
       Streamer.PubSub,
-      "trade_events:#{symbol}",
+      "TRADE_EVENTS:#{trade_event.symbol}",
       trade_event
     )
   end

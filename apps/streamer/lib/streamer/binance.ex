@@ -11,15 +11,15 @@ defmodule Streamer.Binance do
   @stream_endpoint "wss://stream.binance.com:9443/ws/"
 
   def start_link(symbol) do
-    lowercased_symbol = String.downcase(symbol)
+    Logger.info("Streamer.Binance is connecting to #{symbol} trade events stream")
 
     WebSockex.start_link(
-      "#{@stream_endpoint}#{lowercased_symbol}@trade",
+      "#{@stream_endpoint}#{String.downcase(symbol)}@trade",
       __MODULE__,
       %State{
-        symbol: lowercased_symbol
+        symbol: symbol
       },
-      name: :"#{__MODULE__}-#{symbol}"
+      name: via_tuple(symbol)
     )
   end
 
@@ -53,8 +53,12 @@ defmodule Streamer.Binance do
 
     Phoenix.PubSub.broadcast(
       Streamer.PubSub,
-      "trade_events:#{state.symbol}",
+      "TRADE_EVENTS:#{state.symbol}",
       trade_event
     )
+  end
+
+  defp via_tuple(symbol) do
+    {:via, Registry, {:binance_workers, symbol}}
   end
 end

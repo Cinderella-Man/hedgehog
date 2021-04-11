@@ -7,13 +7,13 @@ defmodule DataWarehouse.Application do
 
   def start(_type, _args) do
     children = [
-      {DataWarehouse.Subscribers.Supervisor, []},
-      {DataWarehouse.Repo, []}
+      {DataWarehouse.Repo, []},
+      {DataWarehouse.SubscriberSupervisor, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: DataWarehouse.Supervisor]
+    opts = [strategy: :one_for_one, name: __MODULE__]
     Supervisor.start_link(children, opts)
   end
 end

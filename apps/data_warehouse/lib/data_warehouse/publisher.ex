@@ -20,6 +20,8 @@ defmodule DataWarehouse.Publisher do
         to: to,
         interval: interval
       }) do
+    symbol = String.upcase(symbol)
+
     from_ts =
       "#{from}T00:00:00.000Z"
       |> convert_to_ms()
@@ -30,7 +32,7 @@ defmodule DataWarehouse.Publisher do
 
     DataWarehouse.Repo.transaction(
       fn ->
-        from(te in DataWarehouse.TradeEvent,
+        from(te in DataWarehouse.Schema.TradeEvent,
           where:
             te.symbol == ^symbol and
               te.trade_time >= ^from_ts and
@@ -55,18 +57,16 @@ defmodule DataWarehouse.Publisher do
     Logger.info("Publisher finished streaming trade events")
   end
 
-  defp publishTradeEvent(%DataWarehouse.TradeEvent{} = trade_event) do
+  defp publishTradeEvent(%DataWarehouse.Schema.TradeEvent{} = trade_event) do
     new_trade_event =
       struct(
         Streamer.Binance.TradeEvent,
         trade_event |> Map.to_list()
       )
 
-    symbol = String.downcase(trade_event.symbol)
-
     Phoenix.PubSub.broadcast(
       Streamer.PubSub,
-      "trade_events:#{symbol}",
+      "TRADE_EVENTS:#{trade_event.symbol}",
       new_trade_event
     )
   end
