@@ -15,7 +15,7 @@ defmodule DataWarehouse do
   end
 
   def publish_data(args) do
-    DataWarehouse.Publisher.run(args)
+    DataWarehouse.Publisher.start_link(args)
   end
 
   defp to_topic(stream, symbol) do
