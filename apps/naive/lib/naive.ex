@@ -15,10 +15,4 @@ defmodule Naive do
     |> String.upcase()
     |> DynamicSymbolSupervisor.stop_worker()
   end
-
-  def shutdown_trading(symbol) do
-    symbol
-    |> String.upcase()
-    |> DynamicSymbolSupervisor.shutdown_trading()
-  end
 end

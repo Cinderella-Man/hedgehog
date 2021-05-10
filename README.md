@@ -1,10 +1,12 @@
 # Hedgehog
 
+*Note*: This branch is unique as it's a fresh code and it won't be extended further as it was created to support the "build in 15 minutes" teaser/refresher video. Readme below is limited to the functionality that was part of the video.
+
 Repository created to follow along with the [Create a cryptocurrency trading bot in Elixir](https://www.youtube.com/playlist?list=PLxsE19GnjC5Nv1CbeKOiS5YqGqw35aZFJ) course.
 
 Each subsequent video has an assigned git branch that stores a state of the code after it.
 
-For anyone interested in an ebook version of the course, I've published one at [LeanPub](https://leanpub.com/create-a-cryptocurrency-trading-bot-in-elixir).
+For anyone interested in an ebook version of the course, I've published one at [https://www.elixircryptobot.com](https://www.elixircryptobot.com).
 
 ## Limit of Liability/Disclaimer of Warranty
 
@@ -31,7 +33,6 @@ Creating hedgehog_db_1 ... done
 
 ```
 $ mix ecto.create
-The database for DataWarehouse.Repo has been created
 The database for Naive.Repo has been created
 The database for Streamer.Repo has been created
 ```
@@ -51,25 +52,9 @@ $ mix run priv/seed_settings.exs
 ...
 ```
 
-6. Seed default settings into the `streamer` database:
-
-```
-$ cd apps/streamer
-$ mix run priv/seed_settings.exs
-...
-```
-
 ## Further setup (danger zone)
 
-Inside the configuration file(`config/config.exs`) there's a setting(`config :naive, binance_client`) specifying which Binance client should be used. By default, it's the `BinanceMock` module that *won't* connect to the Binance exchange at all neither it will require any access configuration as it stores orders in memory.
-
-To connect to the Binance exchange and make real trades the configuration needs to be changed to the `Binance` client:
-
-```
-# /config/config.exs:L22
-binance_client: BinanceMock, => binance_client: Binance,
-```
-as well as `api_key` and `secret_key` need to be set:
+To connect to the Binance exchange and make real trades the configuration needs to be changed to  as `api_key` and `secret_key` need to be set:
 
 ```
 # /config/config.exs:L49
@@ -86,56 +71,6 @@ iex -S mix
 # connect to the Binance and stream into PubSub
 Streamer.start_streaming("xrpusdt")
 
-# to store trade_events in db
-DataWarehouse.start_storing("trade_events", "xrpusdt")
-
-# to store orders in db
-DataWarehouse.start_storing("orders", "xrpusdt")
-
 # turn on naive strategy
 Naive.start_trading("XRPUSDT")
-```
-
-## Postgres cheat sheet
-
-```
-psql -U postgres -h 127.0.0.1
-Password for user postgres: postgres
-...
-postgres=# \c data_warehouse
-...
-postgres=# \x
-...
-data_warehouse=# SELECT COUNT(*) FROM trade_events;
-...
-data_warehouse=# SELECT COUNT(*) FROM orders;
-```
-
-## Loading backtesting data
-
-```
-cd /tmp
-
-wget https://github.com/Cinderella-Man/binance-trade-events/raw/master/XRPUSDT/XRPUSDT-2019-06-03.csv.gz
-
-gunzip XRPUSDT-2019-06-03.csv.gz
-
-PGPASSWORD=postgres psql -Upostgres -h localhost -ddata_warehouse  -c "\COPY trade_events FROM '/tmp/XRPUSDT-2019-06-03.csv' WITH (FORMAT csv, delimiter ';');"
-
-```
-
-## Running backtesting
-
-```
-DataWarehouse.start_storing("orders", "xrpusdt")
-
-Naive.start_trading("XRPUSDT")
-
-DataWarehouse.publish_data(%{
-  type: :trade_events,
-  symbol: "XRPUSDT",
-  from: "2019-06-02",
-  to: "2019-06-04",
-  interval: 5
-})
 ```

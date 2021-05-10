@@ -1,8 +1,6 @@
 defmodule Naive.Schema.Settings do
   use Ecto.Schema
 
-  alias Naive.Schema.TradingStatusEnum
-
   @primary_key {:id, :binary_id, autogenerate: true}
 
   schema "settings" do
@@ -12,7 +10,7 @@ defmodule Naive.Schema.Settings do
     field(:buy_down_interval, :decimal)
     field(:profit_interval, :decimal)
     field(:rebuy_interval, :decimal)
-    field(:status, TradingStatusEnum)
+    field(:enabled, :boolean)
 
     timestamps()
   end

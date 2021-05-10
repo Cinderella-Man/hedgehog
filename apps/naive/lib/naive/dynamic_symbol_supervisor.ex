@@ -9,8 +9,6 @@ defmodule Naive.DynamicSymbolSupervisor do
 
   import Ecto.Query, only: [from: 2]
 
-  @registry :naive_symbol_supervisors
-
   def start_link(_arg) do
     DynamicSupervisor.start_link(__MODULE__, [], name: __MODULE__)
   end
@@ -22,7 +20,7 @@ defmodule Naive.DynamicSymbolSupervisor do
   def autostart_workers() do
     Repo.all(
       from(s in Settings,
-        where: s.status == "on",
+        where: s.enabled == true,
         select: s.symbol
       )
     )
@@ -31,27 +29,20 @@ defmodule Naive.DynamicSymbolSupervisor do
 
   def start_worker(symbol) do
     Logger.info("Starting trading on #{symbol}")
-    update_status(symbol, "on")
+    update_enabled(symbol, true)
     start_child(symbol)
   end
 
   def stop_worker(symbol) do
     Logger.info("Stopping trading on #{symbol}")
-    update_status(symbol, "off")
+    update_enabled(symbol, false)
     stop_child(symbol)
   end
 
-  def shutdown_trading(symbol) when is_binary(symbol) do
-    Logger.info("Shutdown of trading on #{symbol} initialized")
-    {:ok, settings} = update_status(symbol, "shutdown")
-    Naive.Leader.notify(:settings_updated, settings)
-    {:ok, settings}
-  end
-
-  defp update_status(symbol, status)
-       when is_binary(symbol) and is_binary(status) do
+  defp update_enabled(symbol, value)
+      when is_binary(symbol) and is_boolean(value) do
     Repo.get_by(Settings, symbol: symbol)
-    |> Ecto.Changeset.change(%{status: status})
+    |> Ecto.Changeset.change(%{enabled: value})
     |> Repo.update()
   end
 
@@ -63,7 +54,7 @@ defmodule Naive.DynamicSymbolSupervisor do
   end
 
   defp stop_child(args) do
-    case Registry.lookup(@registry, args) do
+    case Registry.lookup(:naive_symbol_supervisors, args) do
       [{pid, _}] -> DynamicSupervisor.terminate_child(__MODULE__, pid)
       _ -> Logger.warn("Unable to locate process assigned to #{inspect(args)}")
     end

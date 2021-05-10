@@ -3,11 +3,6 @@ defmodule Streamer.Binance do
 
   require Logger
 
-  defmodule State do
-    @enforce_keys [:symbol]
-    defstruct [:symbol]
-  end
-
   @stream_endpoint "wss://stream.binance.com:9443/ws/"
 
   def start_link(symbol) do
@@ -16,23 +11,21 @@ defmodule Streamer.Binance do
     WebSockex.start_link(
       "#{@stream_endpoint}#{String.downcase(symbol)}@trade",
       __MODULE__,
-      %State{
-        symbol: symbol
-      },
+      %{symbol: symbol},
       name: via_tuple(symbol)
     )
   end
 
   def handle_frame({_type, msg}, state) do
     case Jason.decode(msg) do
-      {:ok, event} -> process_event(event, state)
+      {:ok, event} -> process_event(event)
       {:error, _} -> throw("Unable to parse msg: #{msg}")
     end
 
     {:ok, state}
   end
 
-  def process_event(%{"e" => "trade"} = event, state) do
+  def process_event(%{"e" => "trade"} = event) do
     trade_event = %Streamer.Binance.TradeEvent{
       :event_type => event["e"],
       :event_time => event["E"],
@@ -53,7 +46,7 @@ defmodule Streamer.Binance do
 
     Phoenix.PubSub.broadcast(
       Streamer.PubSub,
-      "TRADE_EVENTS:#{state.symbol}",
+      "TRADE_EVENTS:#{trade_event.symbol}",
       trade_event
     )
   end

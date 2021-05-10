@@ -9,7 +9,7 @@ defmodule Naive.MixProject do
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      elixir: "~> 1.10",
+      elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -27,12 +27,10 @@ defmodule Naive.MixProject do
   defp deps do
     [
       {:binance, "~> 0.7.1"},
-      {:decimal, "~> 1.0"},
+      {:decimal, "~> 2.0"},
       {:ecto_sql, "~> 3.0"},
-      {:ecto_enum, "~> 1.4"},
-      {:postgrex, ">= 0.0.0"},
       {:phoenix_pubsub, "~> 2.0"},
-      {:binance_mock, in_umbrella: true},
+      {:postgrex, ">= 0.0.0"},
       {:streamer, in_umbrella: true}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
