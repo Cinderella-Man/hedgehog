@@ -4,7 +4,7 @@ Repository created to follow along with the [Create a cryptocurrency trading bot
 
 Each subsequent video has an assigned git branch that stores a state of the code after it.
 
-For anyone interested in an ebook version of the course, I've published one at [LeanPub](https://leanpub.com/create-a-cryptocurrency-trading-bot-in-elixir).
+For anyone interested in an ebook version of the course, I've published one at [https://www.elixircryptobot.com](https://www.elixircryptobot.com).
 
 ## Limit of Liability/Disclaimer of Warranty
 
