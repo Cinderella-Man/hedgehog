@@ -27,7 +27,7 @@ defmodule BinanceMock.MixProject do
   defp deps do
     [
       {:binance, "~> 0.7.1"},
-      {:decimal, "~> 1.0"},
+      {:decimal, "~> 2.0"},
       {:phoenix_pubsub, "~> 2.0"},
       {:streamer, in_umbrella: true}
       # {:dep_from_hexpm, "~> 0.3.0"},

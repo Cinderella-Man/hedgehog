@@ -106,12 +106,12 @@ defmodule BinanceMock do
 
     filled_buy_orders =
       order_book.buy_side
-      |> Enum.take_while(&D.lt?(D.cast(trade_event.price), D.cast(&1.price)))
+      |> Enum.take_while(&D.lt?(trade_event.price, &1.price))
       |> Enum.map(&Map.replace!(&1, :status, "FILLED"))
 
     filled_sell_orders =
       order_book.sell_side
-      |> Enum.take_while(&D.gt?(D.cast(trade_event.price), D.cast(&1.price)))
+      |> Enum.take_while(&D.gt?(trade_event.price, &1.price))
       |> Enum.map(&Map.replace!(&1, :status, "FILLED"))
 
     (filled_buy_orders ++ filled_sell_orders)
@@ -179,14 +179,14 @@ defmodule BinanceMock do
           order_book,
           :sell_side,
           [order | order_book.sell_side]
-          |> Enum.sort(&D.lt?(D.cast(&1.price), D.cast(&2.price)))
+          |> Enum.sort(&D.lt?(&1.price, &2.price))
         )
       else
         Map.replace!(
           order_book,
           :buy_side,
           [order | order_book.buy_side]
-          |> Enum.sort(&D.gt?(D.cast(&1.price), D.cast(&2.price)))
+          |> Enum.sort(&D.gt?(&1.price, &2.price))
         )
       end
 
@@ -194,8 +194,6 @@ defmodule BinanceMock do
   end
 
   defp order_limit(symbol, quantity, price, side) do
-    quantity = Float.parse("#{quantity}") |> elem(0)
-
     %Binance.Order{} =
       fake_order =
       generate_fake_order(
@@ -215,8 +213,8 @@ defmodule BinanceMock do
 
   defp generate_fake_order(symbol, quantity, price, side)
        when is_binary(symbol) and
-              is_float(quantity) and
-              is_float(price) and
+              is_binary(quantity) and
+              is_binary(price) and
               (side == "BUY" or side == "SELL") do
     current_timestamp = :os.system_time(:millisecond)
     order_id = GenServer.call(__MODULE__, :generate_id)
@@ -226,8 +224,8 @@ defmodule BinanceMock do
       symbol: symbol,
       order_id: order_id,
       client_order_id: client_order_id,
-      price: Float.to_string(price),
-      orig_qty: Float.to_string(quantity),
+      price: price,
+      orig_qty: quantity,
       executed_qty: "0.00000000",
       cummulative_quote_qty: "0.00000000",
       status: "NEW",

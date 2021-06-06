@@ -233,16 +233,13 @@ defmodule Naive.Trader do
   end
 
   defp trigger_rebuy?(buy_price, current_price, rebuy_interval) do
-    current_price = D.cast(current_price)
-    buy_price = D.cast(buy_price)
-
     rebuy_price =
       D.sub(
         buy_price,
-        D.mult(buy_price, D.cast(rebuy_interval))
+        D.mult(buy_price, rebuy_interval)
       )
 
-    D.cmp(current_price, rebuy_price) == :lt
+    D.lt?(current_price, rebuy_price)
   end
 
   defp calculate_sell_price(
@@ -250,14 +247,13 @@ defmodule Naive.Trader do
          profit_interval,
          tick_size
        ) do
-    fee = D.cast("1.001")
-    original_price = D.mult(D.cast(buy_price), fee)
-    tick = D.cast(tick_size)
+    fee = "1.001"
+    original_price = D.mult(buy_price, fee)
 
     net_target_price =
       D.mult(
         original_price,
-        D.add("1.0", D.cast(profit_interval))
+        D.add("1.0", profit_interval)
       )
 
     gross_target_price =
@@ -266,35 +262,33 @@ defmodule Naive.Trader do
         fee
       )
 
-    D.to_float(
+    D.to_string(
       D.mult(
-        D.div_int(gross_target_price, tick),
-        tick
-      )
+        D.div_int(gross_target_price, tick_size),
+        tick_size
+      ),
+      :normal
     )
   end
 
   defp calculate_buy_price(
-         price,
+         current_price,
          buy_down_interval,
          tick_size
        ) do
-    current_price = D.cast(price)
-    interval = D.cast(buy_down_interval)
-    tick = D.cast(tick_size)
-
     # not necessarily legal price
     exact_buy_price =
       D.sub(
         current_price,
-        D.mult(current_price, interval)
+        D.mult(current_price, buy_down_interval)
       )
 
-    D.to_float(
+    D.to_string(
       D.mult(
-        D.div_int(exact_buy_price, tick),
-        tick
-      )
+        D.div_int(exact_buy_price, tick_size),
+        tick_size
+      ),
+      :normal
     )
   end
 
@@ -303,17 +297,15 @@ defmodule Naive.Trader do
          price,
          step_size
        ) do
-    step = D.cast(step_size)
-    price = D.cast(price)
-
     # not necessarily legal quantity
     exact_target_quantity = D.div(budget, price)
 
-    D.to_float(
+    D.to_string(
       D.mult(
-        D.div_int(exact_target_quantity, step),
-        step
-      )
+        D.div_int(exact_target_quantity, step_size),
+        step_size
+      ),
+      :normal
     )
   end
 
