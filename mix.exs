@@ -19,14 +19,11 @@ defmodule Hedgehog.MixProject do
         "ecto.migrate",
         "cmd --app naive --app streamer mix seed"
       ],
-      "test.integration": &integration_test/1
+      "test.integration": [
+        "setup",
+        "test --only integration"
+      ]
     ]
-  end
-
-  defp integration_test(_) do
-    Mix.env(:test)
-    Mix.Task.run("setup")
-    Mix.Task.run("test", ["--only", "integration"])
   end
 
   # Dependencies listed here are available only for this
