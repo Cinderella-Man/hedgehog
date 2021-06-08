@@ -22,7 +22,9 @@ defmodule BinanceMock do
   end
 
   def get_exchange_info() do
-    Binance.get_exchange_info()
+    case Application.get_env(:binance_mock, :env) do
+      :test -> get_cached_exchange_info()
+      _ -> Binance.get_exchange_info(end
   end
 
   def order_limit_buy(symbol, quantity, price, "GTC") do
@@ -271,5 +273,13 @@ defmodule BinanceMock do
       "TRADE_EVENTS:#{trade_event.symbol}",
       trade_event
     )
+  end
+
+  defp get_cached_exchange_info do
+    {:ok, data} = File.read(
+      "./test/assets/exchange_info.json"
+    )
+
+    {:ok, Jason.decode!(data) |> Binance.ExchangeInfo.new()}
   end
 end

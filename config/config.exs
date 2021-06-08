@@ -9,6 +9,8 @@
 # move said applications out of the umbrella.
 import Config
 
+config :binance_mock, env: Mix.env()
+
 config :streamer,
   ecto_repos: [Streamer.Repo]
 
