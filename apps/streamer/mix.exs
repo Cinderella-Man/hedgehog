@@ -40,7 +40,8 @@ defmodule Streamer.MixProject do
       {:phoenix_pubsub, "~> 2.0"},
       {:postgrex, ">= 0.0.0"},
       {:websockex, "~> 0.4.2"},
-      {:binance_mock, in_umbrella: true, only: :test}
+      {:binance_mock, in_umbrella: true, only: :test},
+      {:core, in_umbrella: true}
     ]
   end
 end
