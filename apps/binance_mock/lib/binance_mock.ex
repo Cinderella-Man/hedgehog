@@ -154,7 +154,7 @@ defmodule BinanceMock do
         Logger.debug("BinanceMock subscribing to #{stream_name}")
 
         Phoenix.PubSub.subscribe(
-          Streamer.PubSub,
+          Core.PubSub,
           stream_name
         )
 
@@ -270,7 +270,7 @@ defmodule BinanceMock do
 
   defp broadcast_trade_event(%TradeEvent{} = trade_event) do
     Phoenix.PubSub.broadcast(
-      Streamer.PubSub,
+      Core.PubSub,
       "TRADE_EVENTS:#{trade_event.symbol}",
       trade_event
     )

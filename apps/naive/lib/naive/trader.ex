@@ -40,7 +40,7 @@ defmodule Naive.Trader do
 
   def init(%State{} = state) do
     Phoenix.PubSub.subscribe(
-      Streamer.PubSub,
+      Core.PubSub,
       "TRADE_EVENTS:#{state.symbol}"
     )
 
@@ -316,7 +316,7 @@ defmodule Naive.Trader do
 
   defp broadcast_order(%Binance.Order{} = order) do
     Phoenix.PubSub.broadcast(
-      Streamer.PubSub,
+      Core.PubSub,
       "ORDERS:#{order.symbol}",
       order
     )

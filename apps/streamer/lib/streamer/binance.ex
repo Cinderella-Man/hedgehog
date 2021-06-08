@@ -52,7 +52,7 @@ defmodule Streamer.Binance do
     )
 
     Phoenix.PubSub.broadcast(
-      Streamer.PubSub,
+      Core.PubSub,
       "TRADE_EVENTS:#{state.symbol}",
       trade_event
     )

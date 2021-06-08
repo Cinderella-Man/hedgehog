@@ -65,7 +65,7 @@ defmodule DataWarehouse.Publisher do
       )
 
     Phoenix.PubSub.broadcast(
-      Streamer.PubSub,
+      Core.PubSub,
       "TRADE_EVENTS:#{trade_event.symbol}",
       new_trade_event
     )

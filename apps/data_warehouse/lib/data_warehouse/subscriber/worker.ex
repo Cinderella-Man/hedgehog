@@ -20,7 +20,7 @@ defmodule DataWarehouse.Subscriber.Worker do
     Logger.info("DataWarehouse worker is subscribing to #{topic}")
 
     Phoenix.PubSub.subscribe(
-      Streamer.PubSub,
+      Core.PubSub,
       topic
     )
 

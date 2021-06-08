@@ -8,8 +8,10 @@ defmodule Core.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Starts a worker by calling: Core.Worker.start_link(arg)
-      # {Core.Worker, arg}
+      {
+        Phoenix.PubSub,
+        name: Core.PubSub, adapter_name: Phoenix.PubSub.PG2
+      }
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

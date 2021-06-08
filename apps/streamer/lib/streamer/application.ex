@@ -8,10 +8,6 @@ defmodule Streamer.Application do
   def start(_type, _args) do
     children = [
       {Streamer.Repo, []},
-      {
-        Phoenix.PubSub,
-        name: Streamer.PubSub, adapter_name: Phoenix.PubSub.PG2
-      },
       {Streamer.Supervisor, []}
       # Starts a worker by calling: Streamer.Worker.start_link(arg)
       # {Streamer.Worker, arg}

@@ -61,7 +61,7 @@ defmodule NaiveTest do
       ]
       |> Enum.map(fn event ->
         Phoenix.PubSub.broadcast(
-          Streamer.PubSub,
+          Core.PubSub,
           "TRADE_EVENTS:#{symbol}",
           event
         )
