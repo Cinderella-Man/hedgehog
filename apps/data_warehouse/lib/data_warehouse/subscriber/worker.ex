@@ -31,7 +31,7 @@ defmodule DataWarehouse.Subscriber.Worker do
   end
 
   def handle_info(
-        %Streamer.Binance.TradeEvent{} = trade_event,
+        %Core.Struct.TradeEvent{} = trade_event,
         state
       ) do
     opts =

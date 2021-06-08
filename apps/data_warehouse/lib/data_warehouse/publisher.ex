@@ -60,7 +60,7 @@ defmodule DataWarehouse.Publisher do
   defp publishTradeEvent(%DataWarehouse.Schema.TradeEvent{} = trade_event) do
     new_trade_event =
       struct(
-        Streamer.Binance.TradeEvent,
+        Core.Struct.TradeEvent,
         trade_event |> Map.to_list()
       )
 

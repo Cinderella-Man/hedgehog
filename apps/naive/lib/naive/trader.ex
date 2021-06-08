@@ -2,6 +2,7 @@ defmodule Naive.Trader do
   use GenServer, restart: :temporary
 
   require Logger
+  alias Core.Struct.TradeEvent
   alias Decimal, as: D
 
   @binance_client Application.get_env(:naive, :binance_client)
@@ -47,7 +48,7 @@ defmodule Naive.Trader do
   end
 
   def handle_info(
-        %Streamer.Binance.TradeEvent{
+        %TradeEvent{
           price: price
         },
         %State{
@@ -92,7 +93,7 @@ defmodule Naive.Trader do
   end
 
   def handle_info(
-        %Streamer.Binance.TradeEvent{
+        %TradeEvent{
           buyer_order_id: order_id
         },
         %State{
@@ -106,7 +107,7 @@ defmodule Naive.Trader do
   end
 
   def handle_info(
-        %Streamer.Binance.TradeEvent{
+        %TradeEvent{
           buyer_order_id: order_id
         },
         %State{
@@ -168,7 +169,7 @@ defmodule Naive.Trader do
   end
 
   def handle_info(
-        %Streamer.Binance.TradeEvent{
+        %TradeEvent{
           seller_order_id: order_id
         },
         %State{
@@ -202,7 +203,7 @@ defmodule Naive.Trader do
   end
 
   def handle_info(
-        %Streamer.Binance.TradeEvent{
+        %TradeEvent{
           price: current_price
         },
         %State{

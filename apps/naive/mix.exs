@@ -40,8 +40,8 @@ defmodule Naive.MixProject do
       {:postgrex, ">= 0.0.0"},
       {:phoenix_pubsub, "~> 2.0"},
       {:binance_mock, in_umbrella: true},
-      {:data_warehouse, in_umbrella: true, only: :test},
-      {:streamer, in_umbrella: true}
+      {:core, in_umbrella: true},
+      {:data_warehouse, in_umbrella: true, only: :test}
     ]
   end
 end
