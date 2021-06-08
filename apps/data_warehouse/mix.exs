@@ -28,6 +28,7 @@ defmodule DataWarehouse.MixProject do
     [
       {:binance, "~> 0.7.1"},
       {:ecto_sql, "~> 3.0"},
+      {:ecto_enum, "~> 1.4"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_pubsub, "~> 2.0"},
       {:core, in_umbrella: true}

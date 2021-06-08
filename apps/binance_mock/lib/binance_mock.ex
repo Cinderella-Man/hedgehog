@@ -25,7 +25,8 @@ defmodule BinanceMock do
   def get_exchange_info() do
     case Application.get_env(:binance_mock, :env) do
       :test -> get_cached_exchange_info()
-      _ -> Binance.get_exchange_info(end
+      _     -> Binance.get_exchange_info()
+    end
   end
 
   def order_limit_buy(symbol, quantity, price, "GTC") do
@@ -277,9 +278,18 @@ defmodule BinanceMock do
   end
 
   defp get_cached_exchange_info do
-    {:ok, data} = File.read(
-      "./test/assets/exchange_info.json"
-    )
+    {:ok, data} =
+      File.cwd!()
+      |> Path.split()
+      |> Enum.drop(-1)
+      |> Kernel.++([
+        "binance_mock",
+        "test",
+        "assets",
+        "exchange_info.json"
+      ])
+      |> Path.join()
+      |> File.read()
 
     {:ok, Jason.decode!(data) |> Binance.ExchangeInfo.new()}
   end

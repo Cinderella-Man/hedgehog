@@ -18,7 +18,7 @@ defmodule Streamer.MixProject do
 
   defp aliases do
     [
-      seed: ["run priv/seed_settings.exs"],
+      seed: ["run priv/seed_settings.exs"]
     ]
   end
 
