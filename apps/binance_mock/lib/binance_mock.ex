@@ -25,7 +25,7 @@ defmodule BinanceMock do
   def get_exchange_info() do
     case Application.get_env(:binance_mock, :env) do
       :test -> get_cached_exchange_info()
-      _     -> Binance.get_exchange_info()
+      _ -> Binance.get_exchange_info()
     end
   end
 
