@@ -26,7 +26,7 @@ defmodule DataWarehouse.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:binance, "~> 0.7.1"},
+      {:binance, "~> 0.7"},
       {:ecto_sql, "~> 3.0"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_pubsub, "~> 2.0"},
