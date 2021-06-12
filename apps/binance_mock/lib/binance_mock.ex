@@ -1,6 +1,7 @@
 defmodule BinanceMock do
   use GenServer
 
+  alias Core.Struct.TradeEvent
   alias Decimal, as: D
 
   require Logger
@@ -22,7 +23,10 @@ defmodule BinanceMock do
   end
 
   def get_exchange_info() do
-    Binance.get_exchange_info()
+    case Application.get_env(:binance_mock, :use_cached_exchange_info) do
+      :test -> get_cached_exchange_info()
+      _ -> Binance.get_exchange_info()
+    end
   end
 
   def order_limit_buy(symbol, quantity, price, "GTC") do
@@ -94,7 +98,7 @@ defmodule BinanceMock do
   end
 
   def handle_info(
-        %Streamer.Binance.TradeEvent{} = trade_event,
+        %TradeEvent{} = trade_event,
         %{order_books: order_books} = state
       ) do
     order_book =
@@ -106,12 +110,12 @@ defmodule BinanceMock do
 
     filled_buy_orders =
       order_book.buy_side
-      |> Enum.take_while(&D.lt?(D.cast(trade_event.price), D.cast(&1.price)))
+      |> Enum.take_while(&D.lt?(trade_event.price, &1.price))
       |> Enum.map(&Map.replace!(&1, :status, "FILLED"))
 
     filled_sell_orders =
       order_book.sell_side
-      |> Enum.take_while(&D.gt?(D.cast(trade_event.price), D.cast(&1.price)))
+      |> Enum.take_while(&D.gt?(trade_event.price, &1.price))
       |> Enum.map(&Map.replace!(&1, :status, "FILLED"))
 
     (filled_buy_orders ++ filled_sell_orders)
@@ -151,7 +155,7 @@ defmodule BinanceMock do
         Logger.debug("BinanceMock subscribing to #{stream_name}")
 
         Phoenix.PubSub.subscribe(
-          Streamer.PubSub,
+          Core.PubSub,
           stream_name
         )
 
@@ -179,14 +183,14 @@ defmodule BinanceMock do
           order_book,
           :sell_side,
           [order | order_book.sell_side]
-          |> Enum.sort(&D.lt?(D.cast(&1.price), D.cast(&2.price)))
+          |> Enum.sort(&D.lt?(&1.price, &2.price))
         )
       else
         Map.replace!(
           order_book,
           :buy_side,
           [order | order_book.buy_side]
-          |> Enum.sort(&D.gt?(D.cast(&1.price), D.cast(&2.price)))
+          |> Enum.sort(&D.gt?(&1.price, &2.price))
         )
       end
 
@@ -194,8 +198,6 @@ defmodule BinanceMock do
   end
 
   defp order_limit(symbol, quantity, price, side) do
-    quantity = Float.parse("#{quantity}") |> elem(0)
-
     %Binance.Order{} =
       fake_order =
       generate_fake_order(
@@ -215,8 +217,8 @@ defmodule BinanceMock do
 
   defp generate_fake_order(symbol, quantity, price, side)
        when is_binary(symbol) and
-              is_float(quantity) and
-              is_float(price) and
+              is_binary(quantity) and
+              is_binary(price) and
               (side == "BUY" or side == "SELL") do
     current_timestamp = :os.system_time(:millisecond)
     order_id = GenServer.call(__MODULE__, :generate_id)
@@ -226,8 +228,8 @@ defmodule BinanceMock do
       symbol: symbol,
       order_id: order_id,
       client_order_id: client_order_id,
-      price: Float.to_string(price),
-      orig_qty: Float.to_string(quantity),
+      price: price,
+      orig_qty: quantity,
       executed_qty: "0.00000000",
       cummulative_quote_qty: "0.00000000",
       status: "NEW",
@@ -253,7 +255,7 @@ defmodule BinanceMock do
   end
 
   defp convert_order_to_event(%Binance.Order{} = order, time) do
-    %Streamer.Binance.TradeEvent{
+    %TradeEvent{
       event_type: order.type,
       event_time: time - 1,
       symbol: order.symbol,
@@ -267,11 +269,28 @@ defmodule BinanceMock do
     }
   end
 
-  defp broadcast_trade_event(%Streamer.Binance.TradeEvent{} = trade_event) do
+  defp broadcast_trade_event(%TradeEvent{} = trade_event) do
     Phoenix.PubSub.broadcast(
-      Streamer.PubSub,
+      Core.PubSub,
       "TRADE_EVENTS:#{trade_event.symbol}",
       trade_event
     )
+  end
+
+  defp get_cached_exchange_info do
+    {:ok, data} =
+      File.cwd!()
+      |> Path.split()
+      |> Enum.drop(-1)
+      |> Kernel.++([
+        "binance_mock",
+        "test",
+        "assets",
+        "exchange_info.json"
+      ])
+      |> Path.join()
+      |> File.read()
+
+    {:ok, Jason.decode!(data) |> Binance.ExchangeInfo.new()}
   end
 end

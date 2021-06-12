@@ -4,7 +4,7 @@ Repository created to follow along with the [Create a cryptocurrency trading bot
 
 Each subsequent video has an assigned git branch that stores a state of the code after it.
 
-For anyone interested in an ebook version of the course, I've published one at [https://www.elixircryptobot.com](https://www.elixircryptobot.com).
+For anyone interested in an written version of the course, it's available free online at [elixircryptobot.com](https://www.elixircryptobot.com).
 
 ## Limit of Liability/Disclaimer of Warranty
 
@@ -27,36 +27,10 @@ $ docker-compose up -d
 Creating hedgehog_db_1 ... done
 ```
 
-3. Create databases inside the Postgres instance:
+3. Create, migrate and seed databases inside the Postgres instance:
 
 ```
-$ mix ecto.create
-The database for DataWarehouse.Repo has been created
-The database for Naive.Repo has been created
-The database for Streamer.Repo has been created
-```
-
-4. Migrate all databases:
-
-```
-$ mix ecto.migrate
-...
-```
-
-5. Seed default settings into the `naive` database:
-
-```
-$ cd apps/naive
-$ mix run priv/seed_settings.exs
-...
-```
-
-6. Seed default settings into the `streamer` database:
-
-```
-$ cd apps/streamer
-$ mix run priv/seed_settings.exs
-...
+$ mix setup
 ```
 
 ## Further setup (danger zone)
@@ -66,7 +40,7 @@ Inside the configuration file(`config/config.exs`) there's a setting(`config :na
 To connect to the Binance exchange and make real trades the configuration needs to be changed to the `Binance` client:
 
 ```
-# /config/config.exs:L22
+# /config/config.exs:L25
 binance_client: BinanceMock, => binance_client: Binance,
 ```
 as well as `api_key` and `secret_key` need to be set:
@@ -138,4 +112,10 @@ DataWarehouse.publish_data(%{
   to: "2019-06-04",
   interval: 5
 })
+```
+
+## Running integration test
+
+```
+MIX_ENV=test mix test.integration
 ```

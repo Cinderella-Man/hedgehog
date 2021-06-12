@@ -11,7 +11,14 @@ defmodule Streamer.MixProject do
       lockfile: "../../mix.lock",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      aliases: aliases()
+    ]
+  end
+
+  defp aliases do
+    [
+      seed: ["run priv/seed_settings.exs"]
     ]
   end
 
@@ -32,10 +39,9 @@ defmodule Streamer.MixProject do
       {:jason, "~> 1.2"},
       {:phoenix_pubsub, "~> 2.0"},
       {:postgrex, ">= 0.0.0"},
-      {:websockex, "~> 0.4.2"}
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
-      # {:sibling_app_in_umbrella, in_umbrella: true}
+      {:websockex, "~> 0.4.2"},
+      {:binance_mock, in_umbrella: true},
+      {:core, in_umbrella: true}
     ]
   end
 end

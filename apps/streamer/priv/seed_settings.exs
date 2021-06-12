@@ -4,9 +4,11 @@ alias Decimal
 alias Streamer.Repo
 alias Streamer.Schema.Settings
 
+binance_client = Application.get_env(:naive, :binance_client)
+
 Logger.info("Fetching exchange info from Binance to create trading settings")
 
-{:ok, %{symbols: symbols}} = Binance.get_exchange_info()
+{:ok, %{symbols: symbols}} = binance_client.get_exchange_info()
 
 timestamp = NaiveDateTime.utc_now()
   |> NaiveDateTime.truncate(:second)

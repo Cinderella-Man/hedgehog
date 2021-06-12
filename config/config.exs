@@ -9,6 +9,9 @@
 # move said applications out of the umbrella.
 import Config
 
+config :binance_mock,
+  use_cached_exchange_info: false
+
 config :streamer,
   ecto_repos: [Streamer.Repo]
 
@@ -53,10 +56,4 @@ config :binance,
 config :logger,
   level: :info
 
-# Sample configuration:
-#
-#     config :logger, :console,
-#       level: :info,
-#       format: "$date $time [$level] $metadata$message\n",
-#       metadata: [:user_id]
-#
+import_config "#{config_env()}.exs"
