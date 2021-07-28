@@ -24,7 +24,7 @@ defmodule BinanceMock do
 
   def get_exchange_info() do
     case Application.get_env(:binance_mock, :use_cached_exchange_info) do
-      :test -> get_cached_exchange_info()
+      true -> get_cached_exchange_info()
       _ -> Binance.get_exchange_info()
     end
   end
@@ -42,6 +42,44 @@ defmodule BinanceMock do
       __MODULE__,
       {:get_order, symbol, time, order_id}
     )
+  end
+
+  def generate_fake_order(order_id, symbol, quantity, price, side)
+       when is_binary(symbol) and
+              is_binary(quantity) and
+              is_binary(price) and
+              (side == "BUY" or side == "SELL") do
+    current_timestamp = :os.system_time(:millisecond)
+    client_order_id = :crypto.hash(:md5, "#{order_id}") |> Base.encode16()
+
+    Binance.Order.new(%{
+      symbol: symbol,
+      order_id: order_id,
+      client_order_id: client_order_id,
+      price: price,
+      orig_qty: quantity,
+      executed_qty: "0.00000000",
+      cummulative_quote_qty: "0.00000000",
+      status: "NEW",
+      time_in_force: "GTC",
+      type: "LIMIT",
+      side: side,
+      stop_price: "0.00000000",
+      iceberg_qty: "0.00000000",
+      time: current_timestamp,
+      update_time: current_timestamp,
+      is_working: true
+    })
+  end
+
+  def convert_order_to_order_response(%Binance.Order{} = order) do
+    %{
+      struct(
+        Binance.OrderResponse,
+        order |> Map.to_list()
+      )
+      | transact_time: order.time
+    }
   end
 
   def handle_cast(
@@ -201,6 +239,7 @@ defmodule BinanceMock do
     %Binance.Order{} =
       fake_order =
       generate_fake_order(
+        GenServer.call(__MODULE__, :generate_id),
         symbol,
         quantity,
         price,
@@ -213,45 +252,6 @@ defmodule BinanceMock do
     )
 
     {:ok, convert_order_to_order_response(fake_order)}
-  end
-
-  defp generate_fake_order(symbol, quantity, price, side)
-       when is_binary(symbol) and
-              is_binary(quantity) and
-              is_binary(price) and
-              (side == "BUY" or side == "SELL") do
-    current_timestamp = :os.system_time(:millisecond)
-    order_id = GenServer.call(__MODULE__, :generate_id)
-    client_order_id = :crypto.hash(:md5, "#{order_id}") |> Base.encode16()
-
-    Binance.Order.new(%{
-      symbol: symbol,
-      order_id: order_id,
-      client_order_id: client_order_id,
-      price: price,
-      orig_qty: quantity,
-      executed_qty: "0.00000000",
-      cummulative_quote_qty: "0.00000000",
-      status: "NEW",
-      time_in_force: "GTC",
-      type: "LIMIT",
-      side: side,
-      stop_price: "0.00000000",
-      iceberg_qty: "0.00000000",
-      time: current_timestamp,
-      update_time: current_timestamp,
-      is_working: true
-    })
-  end
-
-  defp convert_order_to_order_response(%Binance.Order{} = order) do
-    %{
-      struct(
-        Binance.OrderResponse,
-        order |> Map.to_list()
-      )
-      | transact_time: order.time
-    }
   end
 
   defp convert_order_to_event(%Binance.Order{} = order, time) do
