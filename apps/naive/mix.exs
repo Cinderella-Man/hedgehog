@@ -37,6 +37,7 @@ defmodule Naive.MixProject do
       {:decimal, "~> 2.0"},
       {:ecto_sql, "~> 3.0"},
       {:ecto_enum, "~> 1.4"},
+      {:mox, "~> 1.0", only: [:test, :integration]},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_pubsub, "~> 2.0"},
       {:binance_mock, in_umbrella: true},

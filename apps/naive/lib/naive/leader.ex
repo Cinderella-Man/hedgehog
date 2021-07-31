@@ -1,5 +1,7 @@
 defmodule Naive.Leader do
   use GenServer
+  @behaviour Naive.LeaderBehaviour
+
   alias Decimal, as: D
   alias Naive.Repo
   alias Naive.Schema.Settings

@@ -21,9 +21,14 @@ config :streamer, Streamer.Repo,
   password: "postgres",
   hostname: "127.0.0.1"
 
+config :core,
+  logger: Logger,
+  pubsub_client: Phoenix.PubSub
+
 config :naive,
   binance_client: BinanceMock,
   ecto_repos: [Naive.Repo],
+  leader: Naive.Leader,
   trading: %{
     defaults: %{
       chunks: 5,

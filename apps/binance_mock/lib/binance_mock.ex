@@ -1,5 +1,6 @@
 defmodule BinanceMock do
   use GenServer
+  @behaviour BinanceMockBehaviour
 
   alias Core.Struct.TradeEvent
   alias Decimal, as: D
